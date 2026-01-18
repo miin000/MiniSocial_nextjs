@@ -11,6 +11,7 @@ import {
     Shield,
     ClipboardList,
     LogOut,
+    Activity,
 } from 'lucide-react'
 
 export default function Sidebar() {
@@ -35,7 +36,8 @@ export default function Sidebar() {
                 <MenuItem icon={<BarChart3 size={18} />} label="Analytics & Statistics" />
                 <MenuItem icon={<Settings size={18} />} label="System Settings" />
                 <MenuItem icon={<Shield size={18} />} label="Admin Accounts" />
-                <MenuItem icon={<ClipboardList size={18} />} label="Logs & Activity" />
+                <MenuItem icon={<ClipboardList size={18} />} label=" System Logs & Activity" />
+                <MenuItem icon={<Activity size={18} />} label="User Logs & Activity" />
             </nav>
 
             {/* Logout */}
