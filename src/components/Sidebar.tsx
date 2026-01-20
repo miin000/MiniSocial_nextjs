@@ -18,15 +18,15 @@ import {
 
 const menu = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-    { label: "User Management", icon: Users, href: "/dashboard/users" },
-    { label: "Posts Management", icon: FileText, href: "/dashboard/posts" },
-    { label: "Reports & Moderation", icon: AlertTriangle, href: "/dashboard/reports" },
-    { label: "Groups & Communities", icon: Users2, href: "/dashboard/groups" },
-    { label: "Analytics & Statistics", icon: BarChart3, href: "/dashboard/analytics" },
-    { label: "System Settings", icon: Settings, href: "/dashboard/settings" },
-    { label: "Admin Accounts", icon: Shield, href: "/dashboard/admins" },
-    { label: "Logs & Activity", icon: ScrollText, href: "/dashboard/logs" },
-    { label: "User Activity Logs", icon: Activity, href: "/dashboard/activity" },
+    { label: "User Management", icon: Users, href: "/dashboard/usermanagement" },
+    { label: "Posts Management", icon: FileText, href: "/posts" },
+    { label: "Reports & Moderation", icon: AlertTriangle, href: "/reports" },
+    { label: "Groups & Communities", icon: Users2, href: "/groups" },
+    { label: "Analytics & Statistics", icon: BarChart3, href: "/analytics" },
+    { label: "System Settings", icon: Settings, href: "/settings" },
+    { label: "Admin Accounts", icon: Shield, href: "/admins" },
+    { label: "Logs & Activity", icon: ScrollText, href: "/logs" },
+    { label: "User Activity Logs", icon: Activity, href: "/activity" },
 ]
 
 export default function Sidebar() {
@@ -62,6 +62,7 @@ export default function Sidebar() {
                             <Icon size={20} />
                             <span className="text-sm font-medium">{item.label}</span>
                         </Link>
+
                     )
                 })}
             </nav>
