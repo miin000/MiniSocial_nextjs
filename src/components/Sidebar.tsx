@@ -19,7 +19,7 @@ import {
 const menu = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
     { label: "User Management", icon: Users, href: "/dashboard/usermanagement" },
-    { label: "Posts Management", icon: FileText, href: "/posts" },
+    { label: "Posts Management", icon: FileText, href: "/dashboard/postmanagement" },
     { label: "Reports & Moderation", icon: AlertTriangle, href: "/reports" },
     { label: "Groups & Communities", icon: Users2, href: "/groups" },
     { label: "Analytics & Statistics", icon: BarChart3, href: "/analytics" },

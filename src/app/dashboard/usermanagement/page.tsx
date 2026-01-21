@@ -206,8 +206,8 @@ export default function UserManagementPage() {
                             key={i}
                             onClick={() => setPage(i + 1)}
                             className={`px-3 py-1 border rounded font-medium ${page === i + 1
-                                    ? "bg-blue-600 text-white"
-                                    : "text-gray-800 hover:bg-gray-100"
+                                ? "bg-blue-600 text-white"
+                                : "text-gray-800 hover:bg-gray-100"
                                 }`}
                         >
                             {i + 1}
@@ -231,38 +231,150 @@ export default function UserManagementPage() {
 
 function StatusBadge({ status }: { status: string }) {
     const map: any = {
-        active: "bg-green-100 text-green-700",
-        banned: "bg-red-100 text-red-700",
+        active: "bg-green-100 text-green-600",
+        banned: "bg-red-100 text-red-600",
     }
 
     return (
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${map[status]}`}>
-            {status}
+        <span
+            className={`px-4 py-1 rounded-full text-xs font-normal ${map[status]}`}
+        >
+            {status.charAt(0).toUpperCase() + status.slice(1)}
         </span>
     )
 }
 
 function RoleBadge({ role }: { role: string }) {
     const map: any = {
-        user: "bg-gray-200 text-gray-800",
-        moderator: "bg-purple-100 text-purple-700",
-        admin: "bg-blue-100 text-blue-700",
+        user: "bg-gray-100 text-gray-600",
+        moderator: "bg-purple-100 text-purple-600",
+        admin: "bg-blue-100 text-blue-600",
     }
 
     return (
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${map[role]}`}>
-            {role}
+        <span
+            className={`px-4 py-1 rounded-full text-xs font-normal ${map[role]}`}
+        >
+            {role.charAt(0).toUpperCase() + role.slice(1)}
         </span>
     )
 }
 
 /* ===================== DATA ===================== */
 
-const USERS = Array.from({ length: 24 }).map((_, i) => ({
-    id: i + 1,
-    username: `user_${i + 1}`,
-    email: `user${i + 1}@example.com`,
-    role: i % 5 === 0 ? "admin" : i % 3 === 0 ? "moderator" : "user",
-    status: i % 6 === 0 ? "banned" : "active",
-    created: "2024-01-15",
-}))
+const USERS = [
+    {
+        id: 1,
+        username: "john_doe",
+        email: "john_doe@example.com",
+        role: "admin",
+        status: "active",
+        created: "2024-03-15",
+    },
+    {
+        id: 2,
+        username: "alice_wonder",
+        email: "alice_wonder@example.com",
+        role: "moderator",
+        status: "active",
+        created: "2024-03-15",
+    },
+    {
+        id: 3,
+        username: "bob_smith",
+        email: "bob_smith@example.com",
+        role: "user",
+        status: "active",
+        created: "2024-03-15",
+    },
+    {
+        id: 4,
+        username: "charlie_bad",
+        email: "charlie_bad@example.com",
+        role: "user",
+        status: "banned",
+        created: "2024-03-15",
+    },
+    {
+        id: 5,
+        username: "david_lee",
+        email: "david_lee@example.com",
+        role: "user",
+        status: "active",
+        created: "2024-03-14",
+    },
+    {
+        id: 6,
+        username: "emma_jones",
+        email: "emma_jones@example.com",
+        role: "moderator",
+        status: "active",
+        created: "2024-03-14",
+    },
+    {
+        id: 7,
+        username: "frank_moore",
+        email: "frank_moore@example.com",
+        role: "user",
+        status: "banned",
+        created: "2024-03-14",
+    },
+    {
+        id: 8,
+        username: "grace_kelly",
+        email: "grace_kelly@example.com",
+        role: "user",
+        status: "active",
+        created: "2024-03-13",
+    },
+    {
+        id: 9,
+        username: "henry_clark",
+        email: "henry_clark@example.com",
+        role: "user",
+        status: "active",
+        created: "2024-03-13",
+    },
+    {
+        id: 10,
+        username: "isabella_moon",
+        email: "isabella_moon@example.com",
+        role: "moderator",
+        status: "active",
+        created: "2024-03-13",
+    },
+    {
+        id: 11,
+        username: "jack_turner",
+        email: "jack_turner@example.com",
+        role: "user",
+        status: "inactive",
+        created: "2024-03-12",
+    },
+    {
+        id: 12,
+        username: "karen_white",
+        email: "karen_white@example.com",
+        role: "user",
+        status: "active",
+        created: "2024-03-12",
+    },
+    {
+        id: 13,
+        username: "leo_martin",
+        email: "leo_martin@example.com",
+        role: "user",
+        status: "banned",
+        created: "2024-03-12",
+    },
+    {
+        id: 14,
+        username: "nina_brown",
+        email: "nina_brown@example.com",
+        role: "admin",
+        status: "active",
+        created: "2024-03-11",
+    },
+
+]
+
