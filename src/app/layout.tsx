@@ -1,4 +1,11 @@
 import "./globals.css"
+import ToastProvider from "@/components/providers/ToastProvider"
+import AuthProvider from "@/components/providers/AuthProvider"
+
+export const metadata = {
+  title: 'MiniSocial Admin',
+  description: 'Admin Dashboard for MiniSocial',
+}
 
 export default function RootLayout({
   children,
@@ -7,7 +14,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ToastProvider />
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   )
 }
