@@ -82,10 +82,10 @@ export default function Topbar() {
 
                     {/* Dropdown Menu */}
                     {isDropdownOpen && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border py-1 z-50">
-                            <div className="px-4 py-2 border-b">
-                                <p className="text-sm font-medium text-gray-900 truncate">
-                                    {user?.fullName}
+                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border py-1 z-50">
+                            <div className="px-4 py-3 border-b">
+                                <p className="text-sm font-semibold text-gray-900 truncate">
+                                    {user?.fullName || user?.full_name || 'Admin User'}
                                 </p>
                                 <p className="text-xs text-gray-500 truncate">
                                     {user?.email}
@@ -94,16 +94,27 @@ export default function Topbar() {
                             <button
                                 onClick={() => {
                                     setIsDropdownOpen(false)
-                                    router.push('/settings')
+                                    router.push('/profile')
                                 }}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition"
+                                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition"
                             >
-                                <Settings size={16} />
-                                Cài đặt
+                                <User size={16} />
+                                Hồ sơ cá nhân
                             </button>
                             <button
+                                onClick={() => {
+                                    setIsDropdownOpen(false)
+                                    router.push('/change-password')
+                                }}
+                                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition"
+                            >
+                                <Settings size={16} />
+                                Đổi mật khẩu
+                            </button>
+                            <div className="border-t my-1"></div>
+                            <button
                                 onClick={handleLogout}
-                                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"
+                                className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition"
                             >
                                 <LogOut size={16} />
                                 Đăng xuất
