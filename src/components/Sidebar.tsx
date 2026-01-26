@@ -21,7 +21,7 @@ const menu = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
     { label: "User Management", icon: Users, href: "/dashboard/usermanagement" },
     { label: "Posts Management", icon: FileText, href: "/dashboard/postmanagement" },
-    { label: "Reports & Moderation", icon: AlertTriangle, href: "/reports" },
+    { label: "Reports & Moderation", icon: AlertTriangle, href: "/dashboard/reports" },
     { label: "Groups & Communities", icon: Users2, href: "/groups" },
     { label: "Analytics & Statistics", icon: BarChart3, href: "/analytics" },
     { label: "System Settings", icon: Settings, href: "/settings" },
@@ -77,7 +77,7 @@ export default function Sidebar() {
 
             {/* Logout */}
             <div className="px-3 py-4 border-t border-slate-800">
-                <button 
+                <button
                     onClick={handleLogout}
                     className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-red-600 hover:text-white transition"
                 >

@@ -60,7 +60,14 @@ export default function PostsManagementPage() {
                     </p>
                 </div>
 
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+                <button
+                    className="
+                        bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium
+                        transition-all
+                        hover:bg-blue-700 hover:-translate-y-0.5 hover:shadow-lg
+                        active:translate-y-0 active:shadow
+                    "
+                >
                     Export Posts
                 </button>
             </div>
@@ -68,7 +75,10 @@ export default function PostsManagementPage() {
             {/* SEARCH + FILTER */}
             <div className="bg-white border rounded-xl p-4 flex gap-4">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <Search
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        size={18}
+                    />
                     <input
                         value={search}
                         onChange={(e) => {
@@ -76,8 +86,11 @@ export default function PostsManagementPage() {
                             setPage(1)
                         }}
                         placeholder="Search by content, author, or post ID..."
-                        className="w-full border rounded-lg pl-10 pr-4 py-2
-             text-gray-800 placeholder-gray-400"
+                        className="
+                            w-full border rounded-lg pl-10 pr-4 py-2
+                            text-gray-800 placeholder-gray-400
+                            focus:outline-none focus:ring-2 focus:ring-blue-500
+                        "
                     />
                 </div>
 
@@ -87,7 +100,10 @@ export default function PostsManagementPage() {
                         setStatus(e.target.value)
                         setPage(1)
                     }}
-                    className=" border rounded-lg px-3 py-2 text-gray-800"
+                    className="
+                        border rounded-lg px-3 py-2 text-gray-800
+                        hover:bg-gray-50 transition
+                    "
                 >
                     <option value="all">All Status</option>
                     <option value="normal">Normal</option>
@@ -101,7 +117,11 @@ export default function PostsManagementPage() {
                 {posts.map((p) => (
                     <div
                         key={p.id}
-                        className="bg-white border rounded-xl p-5 flex justify-between gap-6"
+                        className="
+                            bg-white border rounded-xl p-5
+                            flex justify-between gap-6
+                            transition hover:shadow-md
+                        "
                     >
                         {/* LEFT */}
                         <div className="flex gap-4">
@@ -137,19 +157,22 @@ export default function PostsManagementPage() {
                         </div>
 
                         {/* ACTIONS */}
-                        <div className="flex items-start gap-4 pt-2">
-                            <button onClick={() => onView(p)} className="text-blue-600">
+                        <div className="flex items-start gap-3 pt-2">
+                            <ActionButton onClick={() => onView(p)} color="blue">
                                 <Eye size={20} />
-                            </button>
-                            <button onClick={() => onToggleHide(p)} className="text-orange-500">
+                            </ActionButton>
+
+                            <ActionButton onClick={() => onToggleHide(p)} color="orange">
                                 {p.status === "hidden" ? <Eye size={20} /> : <EyeOff size={20} />}
-                            </button>
-                            <button onClick={() => onWarn(p)} className="text-yellow-500">
+                            </ActionButton>
+
+                            <ActionButton onClick={() => onWarn(p)} color="yellow">
                                 <AlertTriangle size={20} />
-                            </button>
-                            <button onClick={() => onDelete(p)} className="text-red-500">
+                            </ActionButton>
+
+                            <ActionButton onClick={() => onDelete(p)} color="red">
                                 <Trash2 size={20} />
-                            </button>
+                            </ActionButton>
                         </div>
                     </div>
                 ))}
@@ -165,7 +188,11 @@ export default function PostsManagementPage() {
                     <button
                         disabled={page === 1}
                         onClick={() => setPage(page - 1)}
-                        className="px-3 py-1 border rounded font-medium text-gray-800 disabled:opacity-40"
+                        className="
+                            px-3 py-1 border rounded font-medium text-gray-800
+                            disabled:opacity-40
+                            hover:bg-gray-100 transition
+                        "
                     >
                         Previous
                     </button>
@@ -174,11 +201,11 @@ export default function PostsManagementPage() {
                         <button
                             key={i}
                             onClick={() => setPage(i + 1)}
-                            className={`px-3 py-1 border rounded font-medium text-sm ${page === i + 1
-                                ? "bg-blue-600 text-white border-blue-600"
-                                : "text-gray-800 hover:bg-gray-100"
+                            className={`px-3 py-1 border rounded font-medium text-sm transition
+                                ${page === i + 1
+                                    ? "bg-blue-600 text-white border-blue-600"
+                                    : "text-gray-800 hover:bg-gray-100"
                                 }`}
-
                         >
                             {i + 1}
                         </button>
@@ -187,13 +214,47 @@ export default function PostsManagementPage() {
                     <button
                         disabled={page === totalPages}
                         onClick={() => setPage(page + 1)}
-                        className="px-3 py-1 border rounded font-medium text-gray-800 disabled:opacity-40"
+                        className="
+                            px-3 py-1 border rounded font-medium text-gray-800
+                            disabled:opacity-40
+                            hover:bg-gray-100 transition
+                        "
                     >
                         Next
                     </button>
                 </div>
             </div>
         </div>
+    )
+}
+
+/* ===================== ACTION BUTTON ===================== */
+
+function ActionButton({
+    children,
+    onClick,
+    color,
+}: any) {
+    const map: any = {
+        blue: "text-blue-600 hover:bg-blue-50",
+        orange: "text-orange-500 hover:bg-orange-50",
+        yellow: "text-yellow-500 hover:bg-yellow-50",
+        red: "text-red-500 hover:bg-red-50",
+    }
+
+    return (
+        <button
+            onClick={onClick}
+            className={`
+                p-2 rounded-full
+                transition-all
+                hover:scale-110
+                active:scale-95
+                ${map[color]}
+            `}
+        >
+            {children}
+        </button>
     )
 }
 
@@ -261,23 +322,4 @@ const POSTS = [
         comments: 45,
         created: "2024-03-15 08:45",
     },
-    {
-        id: 5419,
-        author: "david_lee",
-        content: "Beautiful sunset today 🌅 Nature never fails to amaze me.",
-        status: "normal",
-        likes: 512,
-        comments: 68,
-        created: "2024-03-14 18:30",
-    },
-    {
-        id: 5418,
-        author: "emma_jones",
-        content: "Just finished reading an amazing book! Highly recommended for mystery lovers.",
-        status: "normal",
-        likes: 156,
-        comments: 19,
-        created: "2024-03-14 16:45",
-    },
-
 ]

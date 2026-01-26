@@ -55,7 +55,7 @@ export default function Topbar() {
 
                 {/* User Dropdown */}
                 <div className="relative" ref={dropdownRef}>
-                    <div 
+                    <div
                         className="flex items-center gap-3 cursor-pointer"
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     >
@@ -74,9 +74,9 @@ export default function Topbar() {
                                 {user?.roles_admin || 'Admin'}
                             </div>
                         </div>
-                        <ChevronDown 
-                            size={16} 
-                            className={`text-gray-600 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
+                        <ChevronDown
+                            size={16}
+                            className={`text-gray-600 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
                         />
                     </div>
 

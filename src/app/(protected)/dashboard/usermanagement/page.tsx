@@ -1,13 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import {
-    Search,
-    Filter,
-    Eye,
-    Ban,
-    Trash2,
-} from "lucide-react"
+import { Search, Filter, Eye, Ban, Trash2 } from "lucide-react"
 
 /* ===================== PAGE ===================== */
 
@@ -20,7 +14,6 @@ export default function UserManagementPage() {
 
     const PAGE_SIZE = 8
 
-    /* ===================== FILTER + SEARCH ===================== */
     const filteredUsers = useMemo(() => {
         return USERS.filter((u) => {
             const searchOk =
@@ -41,7 +34,6 @@ export default function UserManagementPage() {
         page * PAGE_SIZE
     )
 
-    /* ===================== ACTIONS ===================== */
     const onView = (u: any) => alert(`View user: ${u.username}`)
     const onBan = (u: any) => alert(`Ban user: ${u.username}`)
     const onDelete = (u: any) => alert(`Delete user: ${u.username}`)
@@ -60,7 +52,7 @@ export default function UserManagementPage() {
                     </p>
                 </div>
 
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
                     Export Users
                 </button>
             </div>
@@ -69,7 +61,7 @@ export default function UserManagementPage() {
             <div className="bg-white border rounded-xl p-4 space-y-4">
                 <div className="flex gap-4">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
                         <input
                             value={search}
                             onChange={(e) => {
@@ -77,20 +69,19 @@ export default function UserManagementPage() {
                                 setPage(1)
                             }}
                             placeholder="Search by username or email..."
-                            className="w-full border rounded-lg pl-10 pr-4 py-2 text-gray-800"
+                            className="w-full border rounded-lg pl-10 pr-4 py-2 text-gray-900"
                         />
                     </div>
 
                     <button
                         onClick={() => setShowFilter(!showFilter)}
-                        className="flex items-center gap-2 border px-4 py-2 rounded-lg text-sm font-medium text-gray-800 hover:bg-gray-50"
+                        className="flex items-center gap-2 border px-4 py-2 rounded-lg text-sm font-medium text-gray-800 hover:bg-gray-50 transition"
                     >
                         <Filter size={16} />
                         Filters
                     </button>
                 </div>
 
-                {/* FILTER PANEL */}
                 {showFilter && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                         <div>
@@ -103,7 +94,7 @@ export default function UserManagementPage() {
                                     setStatus(e.target.value)
                                     setPage(1)
                                 }}
-                                className="w-full border rounded-lg px-3 py-2 text-gray-800"
+                                className="w-full border rounded-lg px-3 py-2 text-gray-900"
                             >
                                 <option value="all">All Statuses</option>
                                 <option value="active">Active</option>
@@ -121,7 +112,7 @@ export default function UserManagementPage() {
                                     setRole(e.target.value)
                                     setPage(1)
                                 }}
-                                className="w-full border rounded-lg px-3 py-2 text-gray-800"
+                                className="w-full border rounded-lg px-3 py-2 text-gray-900"
                             >
                                 <option value="all">All Roles</option>
                                 <option value="user">User</option>
@@ -135,8 +126,8 @@ export default function UserManagementPage() {
 
             {/* TABLE */}
             <div className="bg-white border rounded-xl overflow-hidden">
-                <table className="w-full text-sm text-gray-800">
-                    <thead className="bg-gray-100 text-gray-800 font-semibold">
+                <table className="w-full text-sm text-gray-900">
+                    <thead className="bg-gray-100 font-semibold">
                         <tr>
                             <th className="p-4 text-left">User</th>
                             <th className="text-left">Email</th>
@@ -151,7 +142,7 @@ export default function UserManagementPage() {
                         {users.map((u) => (
                             <tr key={u.id} className="border-t hover:bg-gray-50">
                                 <td className="p-4 flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold">
+                                    <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold">
                                         {u.username.slice(0, 2).toUpperCase()}
                                     </div>
                                     <div>
@@ -161,69 +152,68 @@ export default function UserManagementPage() {
                                         </p>
                                     </div>
                                 </td>
-                                <td className="text-left">{u.email}</td>
+
+                                <td>{u.email}</td>
+
                                 <td className="text-center">
                                     <RoleBadge role={u.role} />
                                 </td>
+
                                 <td className="text-center">
                                     <StatusBadge status={u.status} />
                                 </td>
+
                                 <td className="text-center">{u.created}</td>
-                                <td className="text-right pr-4 space-x-3">
-                                    <button onClick={() => onView(u)} className="text-blue-600">
-                                        <Eye size={18} />
-                                    </button>
-                                    <button onClick={() => onBan(u)} className="text-orange-500">
-                                        <Ban size={18} />
-                                    </button>
-                                    <button onClick={() => onDelete(u)} className="text-red-500">
-                                        <Trash2 size={18} />
-                                    </button>
+
+                                {/* ACTIONS */}
+                                <td className="text-right pr-4">
+                                    <div className="flex justify-end gap-2">
+                                        <ActionButton onClick={() => onView(u)} type="view">
+                                            <Eye size={18} />
+                                        </ActionButton>
+
+                                        <ActionButton onClick={() => onBan(u)} type="ban">
+                                            <Ban size={18} />
+                                        </ActionButton>
+
+                                        <ActionButton onClick={() => onDelete(u)} type="delete">
+                                            <Trash2 size={18} />
+                                        </ActionButton>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
-
-            {/* FOOTER */}
-            <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-800 font-medium">
-                    Showing {users.length} of {filteredUsers.length} users
-                </p>
-
-                <div className="flex gap-2">
-                    <button
-                        disabled={page === 1}
-                        onClick={() => setPage(page - 1)}
-                        className="px-3 py-1 border rounded font-medium text-gray-800 disabled:opacity-40"
-                    >
-                        Previous
-                    </button>
-
-                    {Array.from({ length: totalPages }).map((_, i) => (
-                        <button
-                            key={i}
-                            onClick={() => setPage(i + 1)}
-                            className={`px-3 py-1 border rounded font-medium ${page === i + 1
-                                ? "bg-blue-600 text-white"
-                                : "text-gray-800 hover:bg-gray-100"
-                                }`}
-                        >
-                            {i + 1}
-                        </button>
-                    ))}
-
-                    <button
-                        disabled={page === totalPages}
-                        onClick={() => setPage(page + 1)}
-                        className="px-3 py-1 border rounded font-medium text-gray-800 disabled:opacity-40"
-                    >
-                        Next
-                    </button>
-                </div>
-            </div>
         </div>
+    )
+}
+
+/* ===================== ACTION BUTTON ===================== */
+
+function ActionButton({
+    children,
+    onClick,
+    type,
+}: {
+    children: React.ReactNode
+    onClick: () => void
+    type: "view" | "ban" | "delete"
+}) {
+    const map: any = {
+        view: "text-blue-600 hover:bg-blue-50 hover:text-blue-700",
+        ban: "text-orange-500 hover:bg-orange-50 hover:text-orange-600",
+        delete: "text-red-500 hover:bg-red-50 hover:text-red-600",
+    }
+
+    return (
+        <button
+            onClick={onClick}
+            className={`p-2 rounded-md transition transform hover:scale-110 ${map[type]}`}
+        >
+            {children}
+        </button>
     )
 }
 
@@ -236,9 +226,7 @@ function StatusBadge({ status }: { status: string }) {
     }
 
     return (
-        <span
-            className={`px-4 py-1 rounded-full text-xs font-normal ${map[status]}`}
-        >
+        <span className={`px-4 py-1 rounded-full text-xs font-medium ${map[status]}`}>
             {status.charAt(0).toUpperCase() + status.slice(1)}
         </span>
     )
@@ -246,20 +234,17 @@ function StatusBadge({ status }: { status: string }) {
 
 function RoleBadge({ role }: { role: string }) {
     const map: any = {
-        user: "bg-gray-100 text-gray-600",
-        moderator: "bg-purple-100 text-purple-600",
-        admin: "bg-blue-100 text-blue-600",
+        user: "bg-gray-100 text-gray-700",
+        moderator: "bg-purple-100 text-purple-700",
+        admin: "bg-blue-100 text-blue-700",
     }
 
     return (
-        <span
-            className={`px-4 py-1 rounded-full text-xs font-normal ${map[role]}`}
-        >
+        <span className={`px-4 py-1 rounded-full text-xs font-medium ${map[role]}`}>
             {role.charAt(0).toUpperCase() + role.slice(1)}
         </span>
     )
 }
-
 /* ===================== DATA ===================== */
 
 const USERS = [
