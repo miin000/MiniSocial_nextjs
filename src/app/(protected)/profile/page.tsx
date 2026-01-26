@@ -108,16 +108,17 @@ export default function ProfilePage() {
                 headers: { 'Content-Type': 'multipart/form-data' },
             })
 
-            // Save avatar URL to database
+            // Save avatar URL to database - use relative URL only
+            const avatarUrl = response.data.url
             const updateResponse = await api.patch('/users/profile', {
-                avatar: response.data.url,
-                avatar_url: response.data.url,
+                avatar: avatarUrl,
+                avatar_url: avatarUrl,
             })
 
             const updatedUser = { 
                 ...user, 
-                avatar: updateResponse.data.avatar || response.data.url,
-                avatar_url: updateResponse.data.avatar_url || response.data.url,
+                avatar: updateResponse.data.avatar || avatarUrl,
+                avatar_url: updateResponse.data.avatar_url || avatarUrl,
             }
             setUser(updatedUser as any)
             toast.success('Cập nhật ảnh đại diện thành công!')
