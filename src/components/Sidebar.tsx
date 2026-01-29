@@ -22,7 +22,7 @@ const menu = [
     { label: "User Management", icon: Users, href: "/dashboard/usermanagement" },
     { label: "Posts Management", icon: FileText, href: "/dashboard/postmanagement" },
     { label: "Reports & Moderation", icon: AlertTriangle, href: "/dashboard/reports" },
-    { label: "Groups & Communities", icon: Users2, href: "/groups" },
+    { label: "Groups & Communities", icon: Users2, href: "/dashboard/groups" },
     { label: "Analytics & Statistics", icon: BarChart3, href: "/analytics" },
     { label: "System Settings", icon: Settings, href: "/settings" },
     { label: "Admin Accounts", icon: Shield, href: "/admins" },
