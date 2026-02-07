@@ -27,3 +27,17 @@ export interface AuthResponse {
   access_token: string;
   user: User;
 }
+export type GroupStatus = 'ACTIVE' | 'DISABLED'
+export type GroupPrivacy = 'PUBLIC' | 'PRIVATE'
+
+export interface Group {
+  id: string
+  name: string
+  description: string
+  owner: string
+  members: number
+  privacy: GroupPrivacy
+  status: GroupStatus
+  createdAt: string
+}
+

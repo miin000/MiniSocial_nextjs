@@ -27,5 +27,16 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+
+  console.log("AXIOS TOKEN =", token);
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
 
 export default api;

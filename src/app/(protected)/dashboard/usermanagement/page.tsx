@@ -1,7 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { Search, Filter, Eye, Ban, Trash2 } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { Search, Filter, Eye, Ban, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
 
 /* ===================== PAGE ===================== */
 
@@ -12,10 +12,29 @@ export default function UserManagementPage() {
     const [status, setStatus] = useState("all")
     const [page, setPage] = useState(1)
 
+    const [usersData, setUsersData] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
+
     const PAGE_SIZE = 8
 
+    /* ===== MOCK API ===== */
+    useEffect(() => {
+        fetchUsers()
+    }, [])
+
+    const fetchUsers = async () => {
+        setLoading(true)
+
+        // 👉 giả lập gọi backend
+        setTimeout(() => {
+            setUsersData(USERS_MOCK)
+            setLoading(false)
+        }, 500)
+    }
+
+    /* ===== FILTER ===== */
     const filteredUsers = useMemo(() => {
-        return USERS.filter((u) => {
+        return usersData.filter((u) => {
             const searchOk =
                 u.username.toLowerCase().includes(search.toLowerCase()) ||
                 u.email.toLowerCase().includes(search.toLowerCase())
@@ -25,7 +44,7 @@ export default function UserManagementPage() {
 
             return searchOk && roleOk && statusOk
         })
-    }, [search, role, status])
+    }, [usersData, search, role, status])
 
     const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE)
 
@@ -139,87 +158,129 @@ export default function UserManagementPage() {
                     </thead>
 
                     <tbody>
-                        {users.map((u) => (
-                            <tr key={u.id} className="border-t hover:bg-gray-50">
-                                <td className="p-4 flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold">
-                                        {u.username.slice(0, 2).toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <p className="font-medium">{u.username}</p>
-                                        <p className="text-xs text-gray-600 font-medium">
-                                            ID: {u.id}
-                                        </p>
-                                    </div>
-                                </td>
-
-                                <td>{u.email}</td>
-
-                                <td className="text-center">
-                                    <RoleBadge role={u.role} />
-                                </td>
-
-                                <td className="text-center">
-                                    <StatusBadge status={u.status} />
-                                </td>
-
-                                <td className="text-center">{u.created}</td>
-
-                                {/* ACTIONS */}
-                                <td className="text-right pr-4">
-                                    <div className="flex justify-end gap-2">
-                                        <ActionButton onClick={() => onView(u)} type="view">
-                                            <Eye size={18} />
-                                        </ActionButton>
-
-                                        <ActionButton onClick={() => onBan(u)} type="ban">
-                                            <Ban size={18} />
-                                        </ActionButton>
-
-                                        <ActionButton onClick={() => onDelete(u)} type="delete">
-                                            <Trash2 size={18} />
-                                        </ActionButton>
-                                    </div>
+                        {loading ? (
+                            <tr>
+                                <td colSpan={6} className="text-center py-8 text-gray-600">
+                                    Loading users...
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            users.map((u) => (
+                                <tr key={u.id} className="border-t hover:bg-gray-50">
+                                    <td className="p-4 flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold">
+                                            {u.username.slice(0, 2).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <p className="font-medium">{u.username}</p>
+                                            <p className="text-xs text-gray-600 font-medium">
+                                                ID: {u.id}
+                                            </p>
+                                        </div>
+                                    </td>
+
+                                    <td>{u.email}</td>
+
+                                    <td className="text-center">
+                                        <RoleBadge role={u.role} />
+                                    </td>
+
+                                    <td className="text-center">
+                                        <StatusBadge status={u.status} />
+                                    </td>
+
+                                    <td className="text-center">{u.created}</td>
+
+                                    <td className="text-right pr-4">
+                                        <div className="flex justify-end gap-2">
+                                            <ActionButton onClick={() => onView(u)} type="view">
+                                                <Eye size={18} />
+                                            </ActionButton>
+                                            <ActionButton onClick={() => onBan(u)} type="ban">
+                                                <Ban size={18} />
+                                            </ActionButton>
+                                            <ActionButton onClick={() => onDelete(u)} type="delete">
+                                                <Trash2 size={18} />
+                                            </ActionButton>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
+
+                {/* PAGINATION */}
+                <div className="flex items-center justify-between px-4 py-3 border-t bg-white">
+                    {/* LEFT TEXT */}
+                    <p className="text-sm text-gray-700 font-medium">
+                        Showing {users.length} of {filteredUsers.length} users
+                    </p>
+
+                    {/* RIGHT CONTROLS */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                            className="px-4 py-2 text-sm border rounded-lg font-medium
+                       disabled:opacity-40 hover:bg-gray-50 transition"
+                        >
+                            Previous
+                        </button>
+
+                        {Array.from({ length: totalPages }).map((_, i) => {
+                            const pageNumber = i + 1
+                            return (
+                                <button
+                                    key={pageNumber}
+                                    onClick={() => setPage(pageNumber)}
+                                    className={`w-9 h-9 rounded-lg text-sm font-medium transition
+                        ${page === pageNumber
+                                            ? "bg-blue-600 text-white"
+                                            : "border hover:bg-gray-50"
+                                        }`}
+                                >
+                                    {pageNumber}
+                                </button>
+                            )
+                        })}
+
+                        <button
+                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                            disabled={page === totalPages}
+                            className="px-4 py-2 text-sm border rounded-lg font-medium
+                       disabled:opacity-40 hover:bg-gray-50 transition"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
     )
 }
 
-/* ===================== ACTION BUTTON ===================== */
+/* ===================== COMPONENTS ===================== */
 
-function ActionButton({
-    children,
-    onClick,
-    type,
-}: {
-    children: React.ReactNode
-    onClick: () => void
-    type: "view" | "ban" | "delete"
-}) {
+function ActionButton({ children, onClick, type }: any) {
     const map: any = {
-        view: "text-blue-600 hover:bg-blue-50 hover:text-blue-700",
-        ban: "text-orange-500 hover:bg-orange-50 hover:text-orange-600",
-        delete: "text-red-500 hover:bg-red-50 hover:text-red-600",
+        view: "text-blue-600 hover:bg-blue-50",
+        ban: "text-orange-500 hover:bg-orange-50",
+        delete: "text-red-500 hover:bg-red-50",
     }
 
     return (
         <button
             onClick={onClick}
-            className={`p-2 rounded-md transition transform hover:scale-110 ${map[type]}`}
+            className={`p-2 rounded-md transition hover:scale-110 ${map[type]}`}
         >
             {children}
         </button>
     )
 }
 
-/* ===================== BADGES ===================== */
-
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status }: any) {
     const map: any = {
         active: "bg-green-100 text-green-600",
         banned: "bg-red-100 text-red-600",
@@ -227,12 +288,12 @@ function StatusBadge({ status }: { status: string }) {
 
     return (
         <span className={`px-4 py-1 rounded-full text-xs font-medium ${map[status]}`}>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+            {status}
         </span>
     )
 }
 
-function RoleBadge({ role }: { role: string }) {
+function RoleBadge({ role }: any) {
     const map: any = {
         user: "bg-gray-100 text-gray-700",
         moderator: "bg-purple-100 text-purple-700",
@@ -241,124 +302,21 @@ function RoleBadge({ role }: { role: string }) {
 
     return (
         <span className={`px-4 py-1 rounded-full text-xs font-medium ${map[role]}`}>
-            {role.charAt(0).toUpperCase() + role.slice(1)}
+            {role}
         </span>
     )
 }
-/* ===================== DATA ===================== */
 
-const USERS = [
-    {
-        id: 1,
-        username: "john_doe",
-        email: "john_doe@example.com",
-        role: "admin",
-        status: "active",
-        created: "2024-03-15",
-    },
-    {
-        id: 2,
-        username: "alice_wonder",
-        email: "alice_wonder@example.com",
-        role: "moderator",
-        status: "active",
-        created: "2024-03-15",
-    },
-    {
-        id: 3,
-        username: "bob_smith",
-        email: "bob_smith@example.com",
-        role: "user",
-        status: "active",
-        created: "2024-03-15",
-    },
-    {
-        id: 4,
-        username: "charlie_bad",
-        email: "charlie_bad@example.com",
-        role: "user",
-        status: "banned",
-        created: "2024-03-15",
-    },
-    {
-        id: 5,
-        username: "david_lee",
-        email: "david_lee@example.com",
-        role: "user",
-        status: "active",
-        created: "2024-03-14",
-    },
-    {
-        id: 6,
-        username: "emma_jones",
-        email: "emma_jones@example.com",
-        role: "moderator",
-        status: "active",
-        created: "2024-03-14",
-    },
-    {
-        id: 7,
-        username: "frank_moore",
-        email: "frank_moore@example.com",
-        role: "user",
-        status: "banned",
-        created: "2024-03-14",
-    },
-    {
-        id: 8,
-        username: "grace_kelly",
-        email: "grace_kelly@example.com",
-        role: "user",
-        status: "active",
-        created: "2024-03-13",
-    },
-    {
-        id: 9,
-        username: "henry_clark",
-        email: "henry_clark@example.com",
-        role: "user",
-        status: "active",
-        created: "2024-03-13",
-    },
-    {
-        id: 10,
-        username: "isabella_moon",
-        email: "isabella_moon@example.com",
-        role: "moderator",
-        status: "active",
-        created: "2024-03-13",
-    },
-    {
-        id: 11,
-        username: "jack_turner",
-        email: "jack_turner@example.com",
-        role: "user",
-        status: "inactive",
-        created: "2024-03-12",
-    },
-    {
-        id: 12,
-        username: "karen_white",
-        email: "karen_white@example.com",
-        role: "user",
-        status: "active",
-        created: "2024-03-12",
-    },
-    {
-        id: 13,
-        username: "leo_martin",
-        email: "leo_martin@example.com",
-        role: "user",
-        status: "banned",
-        created: "2024-03-12",
-    },
-    {
-        id: 14,
-        username: "nina_brown",
-        email: "nina_brown@example.com",
-        role: "admin",
-        status: "active",
-        created: "2024-03-11",
-    },
+/* ===================== MOCK DATA ===================== */
 
+const USERS_MOCK = [
+    { id: 1, username: "john_doe", email: "john@example.com", role: "admin", status: "active", created: "2024-03-15" },
+    { id: 2, username: "alice", email: "alice@example.com", role: "moderator", status: "active", created: "2024-03-15" },
+    { id: 3, username: "bob", email: "bob@example.com", role: "user", status: "banned", created: "2024-03-14" },
+    { id: 4, username: "emma", email: "emma@example.com", role: "user", status: "active", created: "2024-03-14" },
+    { id: 5, username: "frank", email: "frank@example.com", role: "user", status: "active", created: "2024-03-13" },
+    { id: 6, username: "grace", email: "grace@example.com", role: "moderator", status: "active", created: "2024-03-13" },
+    { id: 7, username: "henry", email: "henry@example.com", role: "user", status: "banned", created: "2024-03-12" },
+    { id: 8, username: "nina", email: "nina@example.com", role: "admin", status: "active", created: "2024-03-11" },
+    { id: 9, username: "jack", email: "jack@example.com", role: "user", status: "active", created: "2024-03-11" },
 ]

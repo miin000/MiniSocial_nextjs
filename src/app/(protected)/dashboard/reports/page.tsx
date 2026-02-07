@@ -43,7 +43,7 @@ export default function ReportsPage() {
                 {/* TITLE */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-medium text-gray-800">
+                        <h1 className="text-3xl font-semibold text-gray-900">
                             Reports & Moderation
                         </h1>
                         <p className="text-sm text-gray-500 mt-1">
