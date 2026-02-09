@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Search, Filter, Eye, Ban, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Filter, Eye, Ban, Trash2 } from "lucide-react"
+import api from "@/lib/axios"
 
 /* ===================== PAGE ===================== */
 
@@ -17,19 +18,39 @@ export default function UserManagementPage() {
 
     const PAGE_SIZE = 8
 
-    /* ===== MOCK API ===== */
+    /* ===== FETCH FROM BACKEND ===== */
     useEffect(() => {
         fetchUsers()
     }, [])
 
     const fetchUsers = async () => {
-        setLoading(true)
+        try {
+            setLoading(true)
+            console.log("👉 Fetching users from backend...")
 
-        // 👉 giả lập gọi backend
-        setTimeout(() => {
-            setUsersData(USERS_MOCK)
+            const res = await api.get("/admin/users")
+            console.log("✅ Backend response:", res.data)
+
+
+            // Map data cho đúng UI
+            const mappedUsers = res.data.map((u: any) => ({
+                id: u._id,
+                username: u.username || "Unknown",
+                email: u.email || "-",
+                role: u.role?.toLowerCase() || "user",
+                status: u.isBlocked ? "banned" : "active",
+                created: u.createdAt
+                    ? new Date(u.createdAt).toLocaleDateString()
+                    : "-",
+            }))
+
+            setUsersData(mappedUsers)
+        } catch (error) {
+            console.error("❌ Fetch users error:", error)
+            alert("Không lấy được danh sách user")
+        } finally {
             setLoading(false)
-        }, 500)
+        }
     }
 
     /* ===== FILTER ===== */
@@ -70,17 +91,16 @@ export default function UserManagementPage() {
                         Manage and monitor all users
                     </p>
                 </div>
-
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-                    Export Users
-                </button>
             </div>
 
             {/* SEARCH + FILTER */}
             <div className="bg-white border rounded-xl p-4 space-y-4">
                 <div className="flex gap-4">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
+                        <Search
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600"
+                            size={18}
+                        />
                         <input
                             value={search}
                             onChange={(e) => {
@@ -149,7 +169,7 @@ export default function UserManagementPage() {
                     <thead className="bg-gray-100 font-semibold">
                         <tr>
                             <th className="p-4 text-left">User</th>
-                            <th className="text-left">Email</th>
+                            <th>Email</th>
                             <th className="text-center">Role</th>
                             <th className="text-center">Status</th>
                             <th className="text-center">Created</th>
@@ -167,39 +187,20 @@ export default function UserManagementPage() {
                         ) : (
                             users.map((u) => (
                                 <tr key={u.id} className="border-t hover:bg-gray-50">
-                                    <td className="p-4 flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold">
-                                            {u.username.slice(0, 2).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <p className="font-medium">{u.username}</p>
-                                            <p className="text-xs text-gray-600 font-medium">
-                                                ID: {u.id}
-                                            </p>
-                                        </div>
-                                    </td>
-
+                                    <td className="p-4 font-medium">{u.username}</td>
                                     <td>{u.email}</td>
-
-                                    <td className="text-center">
-                                        <RoleBadge role={u.role} />
-                                    </td>
-
-                                    <td className="text-center">
-                                        <StatusBadge status={u.status} />
-                                    </td>
-
+                                    <td className="text-center">{u.role}</td>
+                                    <td className="text-center">{u.status}</td>
                                     <td className="text-center">{u.created}</td>
-
                                     <td className="text-right pr-4">
                                         <div className="flex justify-end gap-2">
-                                            <ActionButton onClick={() => onView(u)} type="view">
+                                            <ActionButton onClick={() => onView(u)}>
                                                 <Eye size={18} />
                                             </ActionButton>
-                                            <ActionButton onClick={() => onBan(u)} type="ban">
+                                            <ActionButton onClick={() => onBan(u)}>
                                                 <Ban size={18} />
                                             </ActionButton>
-                                            <ActionButton onClick={() => onDelete(u)} type="delete">
+                                            <ActionButton onClick={() => onDelete(u)}>
                                                 <Trash2 size={18} />
                                             </ActionButton>
                                         </div>
@@ -209,53 +210,6 @@ export default function UserManagementPage() {
                         )}
                     </tbody>
                 </table>
-
-                {/* PAGINATION */}
-                <div className="flex items-center justify-between px-4 py-3 border-t bg-white">
-                    {/* LEFT TEXT */}
-                    <p className="text-sm text-gray-700 font-medium">
-                        Showing {users.length} of {filteredUsers.length} users
-                    </p>
-
-                    {/* RIGHT CONTROLS */}
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setPage((p) => Math.max(1, p - 1))}
-                            disabled={page === 1}
-                            className="px-4 py-2 text-sm border rounded-lg font-medium
-                       disabled:opacity-40 hover:bg-gray-50 transition"
-                        >
-                            Previous
-                        </button>
-
-                        {Array.from({ length: totalPages }).map((_, i) => {
-                            const pageNumber = i + 1
-                            return (
-                                <button
-                                    key={pageNumber}
-                                    onClick={() => setPage(pageNumber)}
-                                    className={`w-9 h-9 rounded-lg text-sm font-medium transition
-                        ${page === pageNumber
-                                            ? "bg-blue-600 text-white"
-                                            : "border hover:bg-gray-50"
-                                        }`}
-                                >
-                                    {pageNumber}
-                                </button>
-                            )
-                        })}
-
-                        <button
-                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                            disabled={page === totalPages}
-                            className="px-4 py-2 text-sm border rounded-lg font-medium
-                       disabled:opacity-40 hover:bg-gray-50 transition"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
-
             </div>
         </div>
     )
@@ -263,60 +217,13 @@ export default function UserManagementPage() {
 
 /* ===================== COMPONENTS ===================== */
 
-function ActionButton({ children, onClick, type }: any) {
-    const map: any = {
-        view: "text-blue-600 hover:bg-blue-50",
-        ban: "text-orange-500 hover:bg-orange-50",
-        delete: "text-red-500 hover:bg-red-50",
-    }
-
+function ActionButton({ children, onClick }: any) {
     return (
         <button
             onClick={onClick}
-            className={`p-2 rounded-md transition hover:scale-110 ${map[type]}`}
+            className="p-2 rounded-md text-gray-600 hover:text-black hover:bg-gray-100 transition"
         >
             {children}
         </button>
     )
 }
-
-function StatusBadge({ status }: any) {
-    const map: any = {
-        active: "bg-green-100 text-green-600",
-        banned: "bg-red-100 text-red-600",
-    }
-
-    return (
-        <span className={`px-4 py-1 rounded-full text-xs font-medium ${map[status]}`}>
-            {status}
-        </span>
-    )
-}
-
-function RoleBadge({ role }: any) {
-    const map: any = {
-        user: "bg-gray-100 text-gray-700",
-        moderator: "bg-purple-100 text-purple-700",
-        admin: "bg-blue-100 text-blue-700",
-    }
-
-    return (
-        <span className={`px-4 py-1 rounded-full text-xs font-medium ${map[role]}`}>
-            {role}
-        </span>
-    )
-}
-
-/* ===================== MOCK DATA ===================== */
-
-const USERS_MOCK = [
-    { id: 1, username: "john_doe", email: "john@example.com", role: "admin", status: "active", created: "2024-03-15" },
-    { id: 2, username: "alice", email: "alice@example.com", role: "moderator", status: "active", created: "2024-03-15" },
-    { id: 3, username: "bob", email: "bob@example.com", role: "user", status: "banned", created: "2024-03-14" },
-    { id: 4, username: "emma", email: "emma@example.com", role: "user", status: "active", created: "2024-03-14" },
-    { id: 5, username: "frank", email: "frank@example.com", role: "user", status: "active", created: "2024-03-13" },
-    { id: 6, username: "grace", email: "grace@example.com", role: "moderator", status: "active", created: "2024-03-13" },
-    { id: 7, username: "henry", email: "henry@example.com", role: "user", status: "banned", created: "2024-03-12" },
-    { id: 8, username: "nina", email: "nina@example.com", role: "admin", status: "active", created: "2024-03-11" },
-    { id: 9, username: "jack", email: "jack@example.com", role: "user", status: "active", created: "2024-03-11" },
-]
