@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Search, Filter, Eye, Ban, Trash2 } from "lucide-react"
 import api from "@/lib/axios"
+import { useAuthStore } from "@/store/auth.store"
 
 /* ===================== PAGE ===================== */
 
@@ -16,10 +17,15 @@ export default function UserManagementPage() {
     const [usersData, setUsersData] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
+    const { user, token } = useAuthStore()
+
     const PAGE_SIZE = 8
 
     /* ===== FETCH FROM BACKEND ===== */
     useEffect(() => {
+        console.log("🔑 Current user:", user)
+        console.log("🔑 Current token:", token)
+        console.log("🔑 User role:", user?.roles_admin)
         fetchUsers()
     }, [])
 
@@ -27,6 +33,7 @@ export default function UserManagementPage() {
         try {
             setLoading(true)
             console.log("👉 Fetching users from backend...")
+            console.log("API URL:", process.env.NEXT_PUBLIC_API_URL)
 
             const res = await api.get("/admin/users")
             console.log("✅ Backend response:", res.data)
@@ -45,9 +52,15 @@ export default function UserManagementPage() {
             }))
 
             setUsersData(mappedUsers)
-        } catch (error) {
+        } catch (error: any) {
             console.error("❌ Fetch users error:", error)
-            alert("Không lấy được danh sách user")
+            console.error("❌ Error response:", error.response?.data)
+            console.error("❌ Error status:", error.response?.status)
+            
+            const errorMsg = error.response?.data?.message || error.message
+            const errorStatus = error.response?.status
+            
+            alert(`Lỗi ${errorStatus || "Unknown"}: ${errorMsg}`)
         } finally {
             setLoading(false)
         }
