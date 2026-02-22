@@ -3,64 +3,54 @@
 import { useEffect, useMemo, useState } from "react"
 import { Search, Filter, Eye, Ban, Trash2 } from "lucide-react"
 import api from "@/lib/axios"
-import { useAuthStore } from "@/store/auth.store"
+
+/* ===================== TYPES ===================== */
+type User = {
+    id: string
+    username: string
+    email: string
+    role: "user" | "moderator" | "admin"
+    status: "active" | "banned"
+    created: string
+}
 
 /* ===================== PAGE ===================== */
-
 export default function UserManagementPage() {
-    const [showFilter, setShowFilter] = useState(false)
+    const [usersData, setUsersData] = useState<User[]>([])
+    const [loading, setLoading] = useState(true)
+
     const [search, setSearch] = useState("")
     const [role, setRole] = useState("all")
     const [status, setStatus] = useState("all")
+    const [showFilter, setShowFilter] = useState(false)
+
     const [page, setPage] = useState(1)
-
-    const [usersData, setUsersData] = useState<any[]>([])
-    const [loading, setLoading] = useState(true)
-
-    const { user, token } = useAuthStore()
-
     const PAGE_SIZE = 8
 
-    /* ===== FETCH FROM BACKEND ===== */
+    /* ===== FETCH USERS ===== */
     useEffect(() => {
-        console.log("🔑 Current user:", user)
-        console.log("🔑 Current token:", token)
-        console.log("🔑 User role:", user?.roles_admin)
         fetchUsers()
     }, [])
 
     const fetchUsers = async () => {
         try {
             setLoading(true)
-            console.log("👉 Fetching users from backend...")
-            console.log("API URL:", process.env.NEXT_PUBLIC_API_URL)
-
             const res = await api.get("/admin/users")
-            console.log("✅ Backend response:", res.data)
 
-
-            // Map data cho đúng UI
-            const mappedUsers = res.data.map((u: any) => ({
+            const mapped: User[] = res.data.map((u: any) => ({
                 id: u._id,
-                username: u.username || "Unknown",
-                email: u.email || "-",
-                role: u.role?.toLowerCase() || "user",
+                username: u.username,
+                email: u.email,
+                role: u.role || "user",
                 status: u.isBlocked ? "banned" : "active",
                 created: u.createdAt
-                    ? new Date(u.createdAt).toLocaleDateString()
+                    ? new Date(u.createdAt).toISOString().split("T")[0]
                     : "-",
             }))
 
-            setUsersData(mappedUsers)
-        } catch (error: any) {
-            console.error("❌ Fetch users error:", error)
-            console.error("❌ Error response:", error.response?.data)
-            console.error("❌ Error status:", error.response?.status)
-            
-            const errorMsg = error.response?.data?.message || error.message
-            const errorStatus = error.response?.status
-            
-            alert(`Lỗi ${errorStatus || "Unknown"}: ${errorMsg}`)
+            setUsersData(mapped)
+        } catch (err) {
+            alert("Không lấy được danh sách user")
         } finally {
             setLoading(false)
         }
@@ -81,29 +71,41 @@ export default function UserManagementPage() {
     }, [usersData, search, role, status])
 
     const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE)
-
     const users = filteredUsers.slice(
         (page - 1) * PAGE_SIZE,
         page * PAGE_SIZE
     )
 
-    const onView = (u: any) => alert(`View user: ${u.username}`)
-    const onBan = (u: any) => alert(`Ban user: ${u.username}`)
-    const onDelete = (u: any) => alert(`Delete user: ${u.username}`)
+    /* ===== ACTIONS ===== */
+    const onBanToggle = async (u: User) => {
+        await api.patch(`/admin/users/${u.id}/ban`)
+        fetchUsers()
+    }
 
+    const onDelete = async (u: User) => {
+        if (!confirm(`Xoá user ${u.username}?`)) return
+        await api.delete(`/admin/users/${u.id}`)
+        fetchUsers()
+    }
+
+    const onView = (u: User) => {
+        alert(
+            `Username: ${u.username}\nEmail: ${u.email}\nRole: ${u.role}\nStatus: ${u.status}`
+        )
+    }
+
+    /* ===================== UI ===================== */
     return (
         <div className="space-y-6">
 
             {/* TITLE */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-semibold text-gray-900">
-                        User Management
-                    </h1>
-                    <p className="text-gray-700 font-medium mt-1">
-                        Manage and monitor all users
-                    </p>
-                </div>
+            <div>
+                <h1 className="text-3xl font-semibold text-gray-900">
+                    User Management
+                </h1>
+                <p className="text-gray-600 mt-1">
+                    Manage and monitor all users
+                </p>
             </div>
 
             {/* SEARCH + FILTER */}
@@ -111,7 +113,7 @@ export default function UserManagementPage() {
                 <div className="flex gap-4">
                     <div className="relative flex-1">
                         <Search
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                             size={18}
                         />
                         <input
@@ -121,13 +123,13 @@ export default function UserManagementPage() {
                                 setPage(1)
                             }}
                             placeholder="Search by username or email..."
-                            className="w-full border rounded-lg pl-10 pr-4 py-2 text-gray-900"
+                            className="w-full border rounded-lg pl-10 pr-4 py-2 text-gray-900 placeholder-gray-400"
                         />
                     </div>
 
                     <button
                         onClick={() => setShowFilter(!showFilter)}
-                        className="flex items-center gap-2 border px-4 py-2 rounded-lg text-sm font-medium text-gray-800 hover:bg-gray-50 transition"
+                        className="flex items-center gap-2 border px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
                     >
                         <Filter size={16} />
                         Filters
@@ -135,9 +137,9 @@ export default function UserManagementPage() {
                 </div>
 
                 {showFilter && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-semibold mb-1 text-gray-800">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Status
                             </label>
                             <select
@@ -148,14 +150,14 @@ export default function UserManagementPage() {
                                 }}
                                 className="w-full border rounded-lg px-3 py-2 text-gray-900"
                             >
-                                <option value="all">All Statuses</option>
+                                <option value="all">All</option>
                                 <option value="active">Active</option>
                                 <option value="banned">Banned</option>
                             </select>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-semibold mb-1 text-gray-800">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Role
                             </label>
                             <select
@@ -166,7 +168,7 @@ export default function UserManagementPage() {
                                 }}
                                 className="w-full border rounded-lg px-3 py-2 text-gray-900"
                             >
-                                <option value="all">All Roles</option>
+                                <option value="all">All</option>
                                 <option value="user">User</option>
                                 <option value="moderator">Moderator</option>
                                 <option value="admin">Admin</option>
@@ -178,8 +180,8 @@ export default function UserManagementPage() {
 
             {/* TABLE */}
             <div className="bg-white border rounded-xl overflow-hidden">
-                <table className="w-full text-sm text-gray-900">
-                    <thead className="bg-gray-100 font-semibold">
+                <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-700 font-semibold">
                         <tr>
                             <th className="p-4 text-left">User</th>
                             <th>Email</th>
@@ -193,29 +195,50 @@ export default function UserManagementPage() {
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan={6} className="text-center py-8 text-gray-600">
+                                <td colSpan={6} className="text-center py-10 text-gray-500">
                                     Loading users...
                                 </td>
                             </tr>
                         ) : (
                             users.map((u) => (
-                                <tr key={u.id} className="border-t hover:bg-gray-50">
-                                    <td className="p-4 font-medium">{u.username}</td>
+                                <tr
+                                    key={u.id}
+                                    className="border-t text-gray-900 hover:bg-gray-50"
+                                >
+                                    <td className="p-4 font-medium">
+                                        {u.username}
+                                    </td>
                                     <td>{u.email}</td>
-                                    <td className="text-center">{u.role}</td>
-                                    <td className="text-center">{u.status}</td>
-                                    <td className="text-center">{u.created}</td>
+
+                                    <td className="text-center">
+                                        <RoleBadge role={u.role} />
+                                    </td>
+
+                                    <td className="text-center">
+                                        <StatusBadge status={u.status} />
+                                    </td>
+
+                                    <td className="text-center">
+                                        {u.created}
+                                    </td>
+
                                     <td className="text-right pr-4">
-                                        <div className="flex justify-end gap-2">
-                                            <ActionButton onClick={() => onView(u)}>
+                                        <div className="flex justify-end gap-3">
+                                            <IconButton color="blue" onClick={() => onView(u)}>
                                                 <Eye size={18} />
-                                            </ActionButton>
-                                            <ActionButton onClick={() => onBan(u)}>
+                                            </IconButton>
+                                            <IconButton
+                                                color="orange"
+                                                onClick={() => onBanToggle(u)}
+                                            >
                                                 <Ban size={18} />
-                                            </ActionButton>
-                                            <ActionButton onClick={() => onDelete(u)}>
+                                            </IconButton>
+                                            <IconButton
+                                                color="red"
+                                                onClick={() => onDelete(u)}
+                                            >
                                                 <Trash2 size={18} />
-                                            </ActionButton>
+                                            </IconButton>
                                         </div>
                                     </td>
                                 </tr>
@@ -223,20 +246,99 @@ export default function UserManagementPage() {
                         )}
                     </tbody>
                 </table>
+
+                {/* PAGINATION */}
+                <div className="flex items-center justify-between p-4 border-t text-sm text-gray-600">
+                    <span>
+                        Showing {users.length} of {filteredUsers.length} users
+                    </span>
+
+                    <div className="flex gap-2">
+                        <button
+                            disabled={page === 1}
+                            onClick={() => setPage((p) => p - 1)}
+                            className="px-3 py-1 border rounded disabled:opacity-40"
+                        >
+                            Previous
+                        </button>
+
+                        {Array.from({ length: totalPages }).map((_, i) => (
+                            <button
+                                key={i}
+                                onClick={() => setPage(i + 1)}
+                                className={`px-3 py-1 rounded ${page === i + 1
+                                    ? "bg-blue-600 text-white"
+                                    : "border"
+                                    }`}
+                            >
+                                {i + 1}
+                            </button>
+                        ))}
+
+                        <button
+                            disabled={page === totalPages}
+                            onClick={() => setPage((p) => p + 1)}
+                            className="px-3 py-1 border rounded disabled:opacity-40"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     )
 }
 
-/* ===================== COMPONENTS ===================== */
+/* ===================== UI COMPONENTS ===================== */
 
-function ActionButton({ children, onClick }: any) {
+function IconButton({
+    children,
+    onClick,
+    color,
+}: {
+    children: React.ReactNode
+    onClick: () => void
+    color: "blue" | "orange" | "red"
+}) {
+    const colors = {
+        blue: "text-blue-600 hover:bg-blue-50",
+        orange: "text-orange-500 hover:bg-orange-50",
+        red: "text-red-600 hover:bg-red-50",
+    }
+
     return (
         <button
             onClick={onClick}
-            className="p-2 rounded-md text-gray-600 hover:text-black hover:bg-gray-100 transition"
+            className={`p-2 rounded-md transition ${colors[color]}`}
         >
             {children}
         </button>
+    )
+}
+
+function RoleBadge({ role }: { role: string }) {
+    const styles: any = {
+        admin: "bg-red-100 text-red-700",
+        moderator: "bg-purple-100 text-purple-700",
+        user: "bg-gray-100 text-gray-700",
+    }
+
+    return (
+        <span className={`px-3 py-1 rounded-full text-xs font-medium ${styles[role]}`}>
+            {role}
+        </span>
+    )
+}
+
+function StatusBadge({ status }: { status: string }) {
+    return (
+        <span
+            className={`px-3 py-1 rounded-full text-xs font-medium ${status === "active"
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+                }`}
+        >
+            {status === "active" ? "Active" : "Banned"}
+        </span>
     )
 }
