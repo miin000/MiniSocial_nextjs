@@ -77,9 +77,31 @@ export default function UserManagementPage() {
     )
 
     /* ===== ACTIONS ===== */
+
+    // ✅ SỬA CHUẨN THEO BACKEND
     const onBanToggle = async (u: User) => {
-        await api.patch(`/admin/users/${u.id}/ban`)
-        fetchUsers()
+        try {
+            if (u.status === "active") {
+                await api.put(`/admin/users/${u.id}/block`)
+            } else {
+                await api.put(`/admin/users/${u.id}/unblock`)
+            }
+
+            // update UI luôn, không phụ thuộc BE
+            setUsersData(prev =>
+                prev.map(user =>
+                    user.id === u.id
+                        ? {
+                            ...user,
+                            status: user.status === "active" ? "banned" : "active",
+                        }
+                        : user
+                )
+            )
+        } catch (err) {
+            console.error(err)
+            alert("Không cập nhật được trạng thái user")
+        }
     }
 
     const onDelete = async (u: User) => {
@@ -97,7 +119,6 @@ export default function UserManagementPage() {
     /* ===================== UI ===================== */
     return (
         <div className="space-y-6">
-
             {/* TITLE */}
             <div>
                 <h1 className="text-3xl font-semibold text-gray-900">
