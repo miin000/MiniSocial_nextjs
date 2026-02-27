@@ -1,7 +1,16 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Search, Filter, Eye, ShieldOff, ShieldCheck, Trash2 } from "lucide-react"
+import {
+    Search,
+    Eye,
+    ShieldOff,
+    ShieldCheck,
+    Users,
+    Globe,
+    Lock,
+    Crown
+} from "lucide-react"
 import api from "@/lib/axios"
 
 /* ===================== TYPES ===================== */
@@ -10,8 +19,10 @@ type Group = {
     name: string
     description: string
     status: "active" | "blocked"
+    privacy: "public" | "private"
     avatar_url?: string
-    memberCount?: number
+    memberCount: number
+    owner?: string
     created: string
 }
 
@@ -22,12 +33,11 @@ export default function GroupManagementPage() {
 
     const [search, setSearch] = useState("")
     const [status, setStatus] = useState("all")
-    const [showFilter, setShowFilter] = useState(false)
+    const [privacy, setPrivacy] = useState("all")
 
     const [page, setPage] = useState(1)
-    const PAGE_SIZE = 8
+    const PAGE_SIZE = 6
 
-    /* ===== FETCH GROUPS ===== */
     useEffect(() => {
         fetchGroups()
     }, [])
@@ -42,15 +52,17 @@ export default function GroupManagementPage() {
                 name: g.name,
                 description: g.description || "",
                 status: g.status === "blocked" ? "blocked" : "active",
+                privacy: g.privacy || "public",
                 avatar_url: g.avatar_url,
-                memberCount: g.memberCount,
+                memberCount: g.memberCount || 0,
+                owner: g.owner?.username || "Unknown",
                 created: g.createdAt
                     ? new Date(g.createdAt).toISOString().split("T")[0]
-                    : "-",
+                    : "-"
             }))
 
             setGroupsData(mapped)
-        } catch (err) {
+        } catch {
             alert("Không lấy được danh sách group")
         } finally {
             setLoading(false)
@@ -60,11 +72,14 @@ export default function GroupManagementPage() {
     /* ===== FILTER ===== */
     const filteredGroups = useMemo(() => {
         return groupsData.filter((g) => {
-            const searchOk = g.name.toLowerCase().includes(search.toLowerCase())
+            const searchOk = g.name
+                .toLowerCase()
+                .includes(search.toLowerCase())
             const statusOk = status === "all" || g.status === status
-            return searchOk && statusOk
+            const privacyOk = privacy === "all" || g.privacy === privacy
+            return searchOk && statusOk && privacyOk
         })
-    }, [groupsData, search, status])
+    }, [groupsData, search, status, privacy])
 
     const totalPages = Math.ceil(filteredGroups.length / PAGE_SIZE)
     const groups = filteredGroups.slice(
@@ -72,11 +87,10 @@ export default function GroupManagementPage() {
         page * PAGE_SIZE
     )
 
-    /* ===== ACTIONS ===== */
     const onToggleStatus = async (g: Group) => {
         const newStatus = g.status === "active" ? "blocked" : "active"
-        const label = newStatus === "blocked" ? "khoá" : "mở khoá"
-        if (!confirm(`Bạn có chắc muốn ${label} group "${g.name}"?`)) return
+        if (!confirm("Bạn chắc chắn muốn thay đổi trạng thái group?")) return
+
         try {
             await api.put(`/admin/groups/${g.id}/status`, { status: newStatus })
             setGroupsData((prev) =>
@@ -85,11 +99,10 @@ export default function GroupManagementPage() {
                 )
             )
         } catch {
-            alert(`Không thể ${label} group`)
+            alert("Không thể thay đổi trạng thái group")
         }
     }
 
-    /* ===== STATUS BADGE ===== */
     const StatusBadge = ({ s }: { s: Group["status"] }) =>
         s === "active" ? (
             <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
@@ -97,172 +110,188 @@ export default function GroupManagementPage() {
             </span>
         ) : (
             <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-600">
-                Blocked
+                Disabled
             </span>
         )
 
-    /* ===== RENDER ===== */
     return (
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Group Management</h1>
-                <span className="text-sm text-gray-500">
-                    Total: {groupsData.length} groups
+                <div>
+                    <h1 className="text-3xl font-semibold text-gray-900">
+                        Groups & Communities
+                    </h1>
+                    <p className="mt-1 text-gray-600 text-sm">
+                        Manage all groups and communities
+                    </p>
+                </div>
+                <span className="px-4 py-2 rounded-xl bg-blue-100 text-blue-700 text-sm font-semibold">
+                    Total Groups: {groupsData.length}
                 </span>
             </div>
 
             {/* Search + Filter */}
-            <div className="flex gap-3 items-center">
-                <div className="relative flex-1 max-w-sm">
+            <div className="flex flex-wrap gap-3 bg-white p-4 rounded-xl border shadow-sm">
+                <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
                     <input
-                        className="pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-300"
-                        placeholder="Search by name..."
+                        className="pl-9 pr-3 py-2 rounded-lg border w-full text-sm text-gray-900"
+                        placeholder="Search by group name or owner..."
                         value={search}
-                        onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+                        onChange={(e) => {
+                            setSearch(e.target.value)
+                            setPage(1)
+                        }}
                     />
                 </div>
-                <button
-                    className="flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 text-sm hover:bg-gray-50"
-                    onClick={() => setShowFilter((v) => !v)}
+
+                <select
+                    className="px-3 py-2 rounded-lg border text-sm text-gray-900"
+                    value={privacy}
+                    onChange={(e) => {
+                        setPrivacy(e.target.value)
+                        setPage(1)
+                    }}
                 >
-                    <Filter className="w-4 h-4" /> Filter
-                </button>
+                    <option value="all">All Privacy</option>
+                    <option value="public">Public</option>
+                    <option value="private">Private</option>
+                </select>
+
+                <select
+                    className="px-3 py-2 rounded-lg border text-sm text-gray-900"
+                    value={status}
+                    onChange={(e) => {
+                        setStatus(e.target.value)
+                        setPage(1)
+                    }}
+                >
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="blocked">Disabled</option>
+                </select>
             </div>
 
-            {/* Filter panel */}
-            {showFilter && (
-                <div className="flex gap-4 p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm">
-                    <div className="flex flex-col gap-1">
-                        <span className="font-medium text-gray-600">Status</span>
-                        {["all", "active", "blocked"].map((v) => (
-                            <label key={v} className="flex items-center gap-1 capitalize cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="status"
-                                    value={v}
-                                    checked={status === v}
-                                    onChange={() => { setStatus(v); setPage(1) }}
-                                />
-                                {v}
-                            </label>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Table */}
+            {/* Grid */}
             {loading ? (
-                <div className="text-center py-10 text-gray-400">Loading...</div>
+                <div className="text-center py-10 text-gray-500">
+                    Loading...
+                </div>
             ) : (
-                <div className="overflow-x-auto rounded-xl border border-gray-200">
-                    <table className="w-full text-sm">
-                        <thead className="bg-gray-50 text-gray-600 font-semibold">
-                            <tr>
-                                <th className="px-4 py-3 text-left">#</th>
-                                <th className="px-4 py-3 text-left">Group</th>
-                                <th className="px-4 py-3 text-left">Description</th>
-                                <th className="px-4 py-3 text-left">Status</th>
-                                <th className="px-4 py-3 text-left">Created</th>
-                                <th className="px-4 py-3 text-left">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {groups.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="text-center py-8 text-gray-400">
-                                        No groups found
-                                    </td>
-                                </tr>
-                            ) : (
-                                groups.map((g, idx) => (
-                                    <tr key={g.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-4 py-3 text-gray-400">
-                                            {(page - 1) * PAGE_SIZE + idx + 1}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-3">
-                                                {g.avatar_url ? (
-                                                    <img
-                                                        src={g.avatar_url}
-                                                        alt={g.name}
-                                                        className="w-8 h-8 rounded-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
-                                                        {g.name.charAt(0).toUpperCase()}
-                                                    </div>
-                                                )}
-                                                <span className="font-medium text-gray-800">{g.name}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-500 max-w-xs truncate">
-                                            {g.description || "-"}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <StatusBadge s={g.status} />
-                                        </td>
-                                        <td className="px-4 py-3 text-gray-500">{g.created}</td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => onToggleStatus(g)}
-                                                    title={g.status === "active" ? "Block group" : "Unblock group"}
-                                                    className={`p-1.5 rounded-lg transition-colors ${
-                                                        g.status === "active"
-                                                            ? "text-orange-500 hover:bg-orange-50"
-                                                            : "text-green-500 hover:bg-green-50"
-                                                    }`}
-                                                >
-                                                    {g.status === "active" ? (
-                                                        <ShieldOff className="w-4 h-4" />
-                                                    ) : (
-                                                        <ShieldCheck className="w-4 h-4" />
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {groups.map((g) => (
+                        <div
+                            key={g.id}
+                            className="rounded-2xl border bg-white shadow-sm hover:shadow-md overflow-hidden"
+                        >
+                            <div className="h-24 bg-gradient-to-r from-blue-500 to-purple-500" />
+
+                            <div className="p-4 space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-lg font-semibold text-gray-900 truncate">
+                                        {g.name}
+                                    </h3>
+                                    <StatusBadge s={g.status} />
+                                </div>
+
+                                <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                                    {g.description}
+                                </p>
+
+                                <div className="text-sm text-gray-700 space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <Crown className="w-4 h-4 text-orange-500" />
+                                        <span className="font-medium">
+                                            Owner:
+                                        </span>{" "}
+                                        {g.owner}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Users className="w-4 h-4" />
+                                        {g.memberCount} members
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {g.privacy === "public" ? (
+                                            <Globe className="w-4 h-4" />
+                                        ) : (
+                                            <Lock className="w-4 h-4" />
+                                        )}
+                                        {g.privacy}
+                                    </div>
+                                    <div className="text-gray-500">
+                                        Created: {g.created}
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2 pt-2">
+                                    <button className="flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700">
+                                        <Eye className="w-4 h-4" />
+                                        View
+                                    </button>
+
+                                    <button
+                                        onClick={() => onToggleStatus(g)}
+                                        className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-lg text-sm font-semibold border ${g.status === "active"
+                                                ? "border-red-300 text-red-600 hover:bg-red-50"
+                                                : "border-green-300 text-green-600 hover:bg-green-50"
+                                            }`}
+                                    >
+                                        {g.status === "active" ? (
+                                            <>
+                                                <ShieldOff className="w-4 h-4" />
+                                                Disable
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ShieldCheck className="w-4 h-4" />
+                                                Enable
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2">
-                    <button
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page === 1}
-                        className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-50"
-                    >
-                        Previous
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                        <button
-                            key={p}
-                            onClick={() => setPage(p)}
-                            className={`px-3 py-1.5 rounded-lg border text-sm ${
-                                p === page
-                                    ? "bg-blue-600 text-white border-blue-600"
-                                    : "hover:bg-gray-50"
-                            }`}
-                        >
-                            {p}
-                        </button>
-                    ))}
-                    <button
-                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={page === totalPages}
-                        className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-40 hover:bg-gray-50"
-                    >
-                        Next
-                    </button>
-                </div>
-            )}
+            {/* Summary */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-6">
+                <SummaryCard
+                    title="Total Members"
+                    value={groupsData.reduce(
+                        (sum, g) => sum + g.memberCount,
+                        0
+                    )}
+                />
+                <SummaryCard
+                    title="Public Groups"
+                    value={groupsData.filter((g) => g.privacy === "public").length}
+                />
+                <SummaryCard
+                    title="Private Groups"
+                    value={
+                        groupsData.filter((g) => g.privacy === "private").length
+                    }
+                />
+                <SummaryCard
+                    title="Disabled Groups"
+                    value={
+                        groupsData.filter((g) => g.status === "blocked").length
+                    }
+                />
+            </div>
+        </div>
+    )
+}
+
+/* ===== SUMMARY CARD ===== */
+function SummaryCard({ title, value }: { title: string; value: number }) {
+    return (
+        <div className="rounded-xl border bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">{title}</p>
+            <p className="text-2xl font-semibold text-gray-900">{value}</p>
         </div>
     )
 }
