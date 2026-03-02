@@ -24,7 +24,7 @@ const menu = [
     { label: "Reports & Moderation", icon: AlertTriangle, href: "/dashboard/reports" },
     { label: "Groups & Communities", icon: Users2, href: "/dashboard/groups" },
     { label: "Analytics & Statistics", icon: BarChart3, href: "/analytics" },
-    { label: "System Settings", icon: Settings, href: "/settings" },
+    { label: "System Settings", icon: Settings, href: "/admin/system-settings" },
     { label: "Admin Accounts", icon: Shield, href: "/admins" },
     { label: "Logs & Activity", icon: ScrollText, href: "/logs" },
     { label: "User Activity Logs", icon: Activity, href: "/activity" },

@@ -3,6 +3,19 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '@/lib/axios';
 import { toast } from 'react-hot-toast';
+// Helper function to set cookies
+const setCookie = (name: string, value: string, days: number = 7) => {
+  if (typeof document === 'undefined') return;
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; SameSite=Strict`;
+};
+
+// Helper function to delete cookie
+const deleteCookie = (name: string) => {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+};
 
 // Định nghĩa interface cho User (khớp với API response)
 export interface User {
@@ -30,6 +43,7 @@ interface AuthState {
   logout: () => void;
   setUser: (user: User | null) => void;
   fetchMe: () => Promise<void>;
+  initializeAuth: () => void;
 }
 
 // Tạo Zustand store với persist middleware (lưu vào localStorage)
@@ -47,6 +61,16 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await api.post('/auth/login', { identifier, password });
           const { accessToken, user } = response.data;
+
+          // Save token to both localStorage (via persist) and cookies
+          const authData = {
+            token: accessToken,
+            user: user,
+            isAuthenticated: true,
+          };
+          
+          // Save to cookies for middleware
+          setCookie('auth-storage', JSON.stringify(authData), 7);
 
           set({
             token: accessToken,
@@ -88,6 +112,9 @@ export const useAuthStore = create<AuthState>()(
 
       // Đăng xuất
       logout: () => {
+        // Clear cookies
+        deleteCookie('auth-storage');
+        
         set({
           user: null,
           token: null,
@@ -119,6 +146,24 @@ export const useAuthStore = create<AuthState>()(
           get().logout();
         }
       },
+      
+        // Initialize auth from cookies/localStorage on page load
+        initializeAuth: () => {
+          try {
+            if (typeof window === 'undefined') return;
+          
+            const raw = localStorage.getItem('auth-storage');
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed.token && parsed.isAuthenticated) {
+                // Also update cookie
+                setCookie('auth-storage', raw, 7);
+              }
+            }
+          } catch (e) {
+            console.error('Failed to initialize auth:', e);
+          }
+        },
     }),
     {
       name: 'auth-storage', // Tên key trong localStorage

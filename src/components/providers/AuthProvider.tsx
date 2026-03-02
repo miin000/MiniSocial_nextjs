@@ -14,6 +14,7 @@ export default function AuthProvider({
   children: React.ReactNode;
 }) {
   const { isAuthenticated, fetchMe } = useAuthStore();
+    const { initializeAuth } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
@@ -21,6 +22,9 @@ export default function AuthProvider({
   useEffect(() => {
     // Kiểm tra trạng thái auth khi component mount
     const checkAuth = async () => {
+        // First, restore auth from localStorage/cookies
+        initializeAuth();
+      
       if (isAuthenticated) {
         await fetchMe();
       }
