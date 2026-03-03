@@ -87,15 +87,18 @@ export default function LogsPage() {
         let matchesDate = true
         const logDate = new Date(log.createdAt)
         const now = new Date()
+        const diff = now.getTime() - logDate.getTime()
 
         if (dateFilter === "24h") {
-            matchesDate =
-                now.getTime() - logDate.getTime() <= 24 * 60 * 60 * 1000
+            matchesDate = diff <= 24 * 60 * 60 * 1000
         }
 
         if (dateFilter === "7d") {
-            matchesDate =
-                now.getTime() - logDate.getTime() <= 7 * 24 * 60 * 60 * 1000
+            matchesDate = diff <= 7 * 24 * 60 * 60 * 1000
+        }
+
+        if (dateFilter === "30d") {
+            matchesDate = diff <= 30 * 24 * 60 * 60 * 1000
         }
 
         return matchesSearch && matchesType && matchesDate
@@ -169,6 +172,7 @@ export default function LogsPage() {
                             <option value="all">All Time</option>
                             <option value="24h">Last 24 Hours</option>
                             <option value="7d">Last 7 Days</option>
+                            <option value="30d">Last 30 Days</option>
                         </select>
 
                         <div className="flex items-center font-medium text-gray-700">
@@ -213,10 +217,10 @@ export default function LogsPage() {
 
                                 <span
                                     className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-full ${log.category === "moderation"
-                                        ? "bg-red-100 text-red-600"
-                                        : log.category === "system"
-                                            ? "bg-blue-100 text-blue-600"
-                                            : "bg-purple-100 text-purple-600"
+                                            ? "bg-red-100 text-red-600"
+                                            : log.category === "system"
+                                                ? "bg-blue-100 text-blue-600"
+                                                : "bg-purple-100 text-purple-600"
                                         }`}
                                 >
                                     {log.category.charAt(0).toUpperCase() +
