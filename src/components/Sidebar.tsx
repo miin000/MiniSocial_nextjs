@@ -27,8 +27,8 @@ const menu = [
     { label: "Analytics & Statistics", icon: BarChart3, href: "/dashboard/analytics" },
     { label: "System Settings", icon: Settings, href: "/dashboard/settings" },
     { label: "Admin Accounts", icon: Shield, href: "/dashboard/admins" },
-    { label: "Logs & Activity", icon: ScrollText, href: "/dashboard/logs" },
-    { label: "User Activity Logs", icon: Activity, href: "/dashboard/activity" },
+    { label: "Logs & Activity", icon: ScrollText, href: "/dashboard/adminlogs" },
+    { label: "User Activity Logs", icon: Activity, href: "/dashboard/userlogs" },
 
 ]
 
