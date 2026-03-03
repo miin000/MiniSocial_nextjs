@@ -3,13 +3,17 @@ import api from '@/lib/axios'
 
 export interface SystemSettings {
   post_limit_per_day?: number
+  comments_per_day?: number
+  max_file_size_mb?: number
   banned_keywords?: string[]
   auto_report_threshold?: number
+  auto_moderation?: boolean
   modules?: {
     groups?: boolean
     chat?: boolean
     notifications?: boolean
   }
+  maintenance_mode?: boolean
 }
 
 export const fetchSystemSettings = async (): Promise<SystemSettings | null> => {

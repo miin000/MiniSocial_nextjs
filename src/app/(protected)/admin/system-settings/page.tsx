@@ -20,14 +20,23 @@ export default function SystemSettingsPage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">System Settings</h1>
-            <p className="text-gray-600 mt-1">Configure system-wide settings</p>
+            <h1 className="text-3xl font-semibold text-gray-800">
+              System Settings
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Configure system-wide settings
+            </p>
           </div>
           <div>
-            <button onClick={handleSaveClick} className="px-4 py-2 bg-blue-600 text-white rounded">Save Changes</button>
+            <button
+              onClick={handleSaveClick}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded transition"
+            >
+              Save Changes
+            </button>
           </div>
         </div>
-
+ 
         <SystemSettingsForm ref={formRef} onSaved={() => setSavedAt(new Date())} />
 
         {savedAt && (
