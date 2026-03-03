@@ -23,11 +23,13 @@ const menu = [
     { label: "Posts Management", icon: FileText, href: "/dashboard/postmanagement" },
     { label: "Reports & Moderation", icon: AlertTriangle, href: "/dashboard/reports" },
     { label: "Groups & Communities", icon: Users2, href: "/dashboard/groups" },
-    { label: "Analytics & Statistics", icon: BarChart3, href: "/analytics" },
-    { label: "System Settings", icon: Settings, href: "/admin/system-settings" },
-    { label: "Admin Accounts", icon: Shield, href: "/admins" },
-    { label: "Logs & Activity", icon: ScrollText, href: "/logs" },
-    { label: "User Activity Logs", icon: Activity, href: "/activity" },
+
+    { label: "Analytics & Statistics", icon: BarChart3, href: "/dashboard/analytics" },
+    { label: "System Settings", icon: Settings, href: "/dashboard/settings" },
+    { label: "Admin Accounts", icon: Shield, href: "/dashboard/admins" },
+    { label: "Logs & Activity", icon: ScrollText, href: "/dashboard/logs" },
+    { label: "User Activity Logs", icon: Activity, href: "/dashboard/activity" },
+
 ]
 
 export default function Sidebar() {
