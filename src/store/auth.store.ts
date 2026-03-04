@@ -57,11 +57,8 @@ interface AuthState {
   logout: () => void;
   setUser: (user: User | null) => void;
   fetchMe: () => Promise<void>;
-<<<<<<< HEAD
   checkSessionExpiry: () => void;
-=======
   initializeAuth: () => void;
->>>>>>> 1c0cfa77ddbc61d177b7d37eac785185fc05044b
 }
 
 // Tạo Zustand store với persist middleware (lưu vào localStorage)
@@ -81,20 +78,7 @@ export const useAuthStore = create<AuthState>()(
           const response = await api.post('/auth/login', { identifier, password });
           const { accessToken, user } = response.data;
 
-<<<<<<< HEAD
           const loginAt = Date.now()
-=======
-          // Save token to both localStorage (via persist) and cookies
-          const authData = {
-            token: accessToken,
-            user: user,
-            isAuthenticated: true,
-          };
-          
-          // Save to cookies for middleware
-          setCookie('auth-storage', JSON.stringify(authData), 7);
-
->>>>>>> 1c0cfa77ddbc61d177b7d37eac785185fc05044b
           set({
             token: accessToken,
             user: user,
@@ -137,13 +121,7 @@ export const useAuthStore = create<AuthState>()(
 
       // Đăng xuất
       logout: () => {
-<<<<<<< HEAD
         clearAuthCookie()
-=======
-        // Clear cookies
-        deleteCookie('auth-storage');
-        
->>>>>>> 1c0cfa77ddbc61d177b7d37eac785185fc05044b
         set({
           user: null,
           token: null,

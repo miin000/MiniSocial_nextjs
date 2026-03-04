@@ -13,12 +13,7 @@ export default function AuthProvider({
 }: {
   children: React.ReactNode;
 }) {
-<<<<<<< HEAD
-  const { isAuthenticated, fetchMe, checkSessionExpiry } = useAuthStore();
-=======
-  const { isAuthenticated, fetchMe } = useAuthStore();
-    const { initializeAuth } = useAuthStore();
->>>>>>> 1c0cfa77ddbc61d177b7d37eac785185fc05044b
+  const { isAuthenticated, fetchMe, checkSessionExpiry, initializeAuth } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
