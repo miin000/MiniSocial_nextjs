@@ -10,6 +10,8 @@ import {
     AlertCircle,
     LogIn,
     Users,
+    Search,
+    Filter,
 } from "lucide-react"
 import api from "@/lib/axios"
 
@@ -29,6 +31,17 @@ export default function UserActivityLogsPage() {
     const [totalPages, setTotalPages] = useState(1)
     const [loading, setLoading] = useState(false)
 
+    const [search, setSearch] = useState("")
+    const [showFilters, setShowFilters] = useState(false)
+    const [type, setType] = useState("all")
+    const [dateRange, setDateRange] = useState("24h")
+
+    /* ================= FETCH LOGS ================= */
+
+    useEffect(() => {
+        fetchLogs(1)
+    }, [search, type, dateRange])
+
     useEffect(() => {
         fetchLogs(page)
     }, [page])
@@ -37,7 +50,9 @@ export default function UserActivityLogsPage() {
         try {
             setLoading(true)
 
-            const res = await api.get(`/admin/logs?page=${currentPage}&limit=5`)
+            const res = await api.get(
+                `/admin/logs?page=${currentPage}&limit=5&search=${search}&type=${type}&dateRange=${dateRange}`
+            )
 
             setLogs((prev) =>
                 currentPage === 1
@@ -61,9 +76,6 @@ export default function UserActivityLogsPage() {
         if (lower.includes("login"))
             return <LogIn className="text-purple-500 w-5 h-5" />
 
-        if (lower.includes("post"))
-            return <FileText className="text-blue-500 w-5 h-5" />
-
         if (lower.includes("like"))
             return <Heart className="text-green-500 w-5 h-5" />
 
@@ -77,9 +89,9 @@ export default function UserActivityLogsPage() {
             return <AlertCircle className="text-red-500 w-5 h-5" />
 
         if (lower.includes("group"))
-            return <Users className="text-purple-500 w-5 h-5" />
+            return <Users className="text-indigo-500 w-5 h-5" />
 
-        return <FileText className="w-5 h-5 text-gray-500" />
+        return <FileText className="text-blue-500 w-5 h-5" />
     }
 
     const getBadgeColor = (action: string) => {
@@ -104,18 +116,28 @@ export default function UserActivityLogsPage() {
         return "bg-gray-100 text-gray-600"
     }
 
-    const renderValue = (value: any) => {
-        if (!value) return null
+    /* ================= RENDER CONTENT ================= */
 
-        if (typeof value === "object") {
-            return (
-                <pre className="bg-gray-50 p-3 rounded-xl text-xs overflow-auto mt-2 border">
-                    {JSON.stringify(value, null, 2)}
-                </pre>
-            )
+    const renderContent = (log: Log) => {
+        if (!log.new_value) return null
+
+        if (typeof log.new_value === "object") {
+            if (log.new_value.content)
+                return (
+                    <p className="text-gray-600 mt-1 text-sm">
+                        "{log.new_value.content}"
+                    </p>
+                )
+
+            if (log.new_value.reason)
+                return (
+                    <p className="text-gray-600 mt-1 text-sm">
+                        Reason: {log.new_value.reason}
+                    </p>
+                )
         }
 
-        return <p className="mt-2 text-sm text-gray-700">{value}</p>
+        return null
     }
 
     /* ================= STATS ================= */
@@ -167,119 +189,174 @@ export default function UserActivityLogsPage() {
     ]
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50">
+        <div className="min-h-screen bg-gray-50 p-8 space-y-8">
 
-            <div className="flex-1 p-8 space-y-8">
+            {/* HEADER */}
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                        User Activity Logs
+                    </h1>
+                    <p className="text-gray-500 mt-1">
+                        Track all user actions and behaviors
+                    </p>
+                </div>
 
-                {/* HEADER */}
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">
-                            User Activity Logs
-                        </h1>
-                        <p className="text-gray-500 mt-1">
-                            Track all user actions and behaviors
-                        </p>
+                <button className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl shadow-sm hover:bg-blue-700 transition">
+                    <Download size={18} />
+                    Export Logs
+                </button>
+            </div>
+
+            {/* SEARCH + FILTER */}
+            <div className="bg-white rounded-2xl shadow-sm p-4 space-y-4">
+                <div className="flex gap-4 items-center">
+                    <div className="flex items-center flex-1 bg-gray-50 px-4 py-2 rounded-xl">
+                        <Search className="w-4 h-4 text-gray-400 mr-2" />
+                        <input
+                            value={search}
+                            onChange={(e) => {
+                                setSearch(e.target.value)
+                                setPage(1)
+                            }}
+                            placeholder="Search by user, action, or target..."
+                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-700"
+                        />
                     </div>
 
-                    <button className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl shadow-sm hover:bg-blue-700 transition">
-                        <Download size={18} />
-                        Export Logs
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className="flex items-center gap-2 border px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100"
+                    >
+                        <Filter size={16} />
+                        Filters
                     </button>
                 </div>
 
-                {/* LOG CARD */}
-                <div className="bg-white rounded-2xl shadow-sm divide-y">
+                {showFilters && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+                        <div>
+                            <label className="text-sm text-gray-500">
+                                Type
+                            </label>
+                            <select
+                                value={type}
+                                onChange={(e) => {
+                                    setType(e.target.value)
+                                    setPage(1)
+                                }}
+                                className="w-full mt-1 border rounded-xl px-3 py-2 text-sm"
+                            >
+                                <option value="all">All Types</option>
+                                <option value="post">Post</option>
+                                <option value="interaction">
+                                    Interaction
+                                </option>
+                                <option value="report">Report</option>
+                                <option value="login">Login</option>
+                            </select>
+                        </div>
 
-                    {logs.map((log, index) => (
-                        <div
-                            key={`${log._id}-${index}`}
-                            className="flex justify-between p-6 hover:bg-gray-50 transition"
-                        >
-                            <div className="flex gap-4 w-full">
+                        <div>
+                            <label className="text-sm text-gray-500">
+                                Date Range
+                            </label>
+                            <select
+                                value={dateRange}
+                                onChange={(e) => {
+                                    setDateRange(e.target.value)
+                                    setPage(1)
+                                }}
+                                className="w-full mt-1 border rounded-xl px-3 py-2 text-sm"
+                            >
+                                <option value="24h">Last 24 hours</option>
+                                <option value="7d">Last 7 days</option>
+                                <option value="30d">Last 30 days</option>
+                            </select>
+                        </div>
+                    </div>
+                )}
+            </div>
 
-                                <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
-                                    {getIcon(log.action)}
-                                </div>
+            {/* LOG LIST */}
+            <div className="bg-white rounded-2xl shadow-sm divide-y">
+                {logs.map((log) => (
+                    <div
+                        key={log._id}
+                        className="flex justify-between p-6 hover:bg-gray-50 transition"
+                    >
+                        <div className="flex gap-4 w-full">
+                            <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
+                                {getIcon(log.action)}
+                            </div>
 
-                                <div className="flex-1">
-
-                                    <p className="font-semibold text-blue-600">
-                                        {log.admin_username}
-                                        <span className="text-gray-500 ml-2 font-normal">
-                                            • {log.action?.replaceAll("_", " ")}
-                                        </span>
-                                    </p>
-
-                                    <p className="text-gray-600 mt-1 text-sm">
-                                        Entity: {log.entity_type}
-                                    </p>
-
-                                    <span
-                                        className={`inline-block mt-3 px-3 py-1 text-xs font-medium rounded-full ${getBadgeColor(
-                                            log.action
-                                        )}`}
-                                    >
-                                        {log.entity_type}
+                            <div className="flex-1">
+                                <p className="font-semibold text-blue-600">
+                                    {log.admin_username}
+                                    <span className="text-gray-500 ml-2 font-normal">
+                                        • {log.action?.replaceAll("_", " ")}
                                     </span>
+                                </p>
 
-                                    {log.old_value && (
-                                        <div className="mt-4">
-                                            <p className="text-xs text-gray-500">Old Value:</p>
-                                            {renderValue(log.old_value)}
-                                        </div>
-                                    )}
+                                <p className="text-gray-600 mt-1 text-sm">
+                                    Entity: {log.entity_type}
+                                </p>
 
-                                    {log.new_value && (
-                                        <div className="mt-4">
-                                            <p className="text-xs text-gray-500">New Value:</p>
-                                            {renderValue(log.new_value)}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                                {renderContent(log)}
 
-                            <div className="text-right text-sm text-gray-500 whitespace-nowrap ml-6">
-                                {new Date(log.created_at).toLocaleTimeString()}
-                                <br />
-                                {new Date(log.created_at).toLocaleDateString()}
+                                <span
+                                    className={`inline-block mt-3 px-3 py-1 text-xs font-medium rounded-full ${getBadgeColor(
+                                        log.action
+                                    )}`}
+                                >
+                                    {log.entity_type}
+                                </span>
                             </div>
                         </div>
-                    ))}
 
-                    {page < totalPages && (
-                        <div className="text-center p-6">
-                            <button
-                                onClick={() => setPage(page + 1)}
-                                className="text-blue-600 hover:underline font-medium"
-                            >
-                                {loading ? "Loading..." : "Load More Logs"}
-                            </button>
+                        <div className="text-right text-sm text-gray-500 whitespace-nowrap ml-6">
+                            {new Date(log.created_at).toLocaleTimeString()}
+                            <br />
+                            {new Date(log.created_at).toLocaleDateString()}
                         </div>
-                    )}
-                </div>
+                    </div>
+                ))}
 
-                {/* STATS */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                    {stats.map((item, index) => (
-                        <div
-                            key={index}
-                            className="bg-white rounded-2xl shadow-sm p-6 flex items-center gap-4"
+                {page < totalPages && (
+                    <div className="text-center p-6">
+                        <button
+                            onClick={() => setPage(page + 1)}
+                            className="text-blue-600 hover:underline font-medium"
                         >
-                            <div
-                                className={`w-12 h-12 rounded-xl flex items-center justify-center ${item.bg}`}
-                            >
-                                {item.icon}
-                            </div>
+                            {loading ? "Loading..." : "Load More Logs"}
+                        </button>
+                    </div>
+                )}
+            </div>
 
-                            <div>
-                                <p className="text-gray-500 text-sm">{item.title}</p>
-                                <p className="text-2xl font-semibold">{item.value}</p>
-                            </div>
+            {/* STATS */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                {stats.map((item) => (
+                    <div
+                        key={item.title}
+                        className="bg-white rounded-2xl shadow-sm p-6 flex items-center gap-4"
+                    >
+                        <div
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center ${item.bg}`}
+                        >
+                            {item.icon}
                         </div>
-                    ))}
-                </div>
 
+                        <div>
+                            <p className="text-gray-500 text-sm">
+                                {item.title}
+                            </p>
+                            <p className="text-2xl font-semibold">
+                                {item.value}
+                            </p>
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     )
