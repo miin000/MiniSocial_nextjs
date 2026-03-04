@@ -4,18 +4,9 @@ import { type NextRequest, NextResponse } from 'next/server'
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password']
 
 export function middleware(request: NextRequest) {
-    const token = request.cookies.get('auth-storage')?.value
-
-    // Parse token từ localStorage (được lưu dưới dạng JSON)
-    let isAuthenticated = false
-    if (token) {
-        try {
-            const authData = JSON.parse(token)
-            isAuthenticated = !!authData.token
-        } catch {
-            isAuthenticated = false
-        }
-    }
+    // auth-token cookie được set bởi auth.store khi login (tồn tại 12h)
+    const authToken = request.cookies.get('auth-token')?.value
+    const isAuthenticated = !!authToken
 
     const { pathname } = request.nextUrl
 

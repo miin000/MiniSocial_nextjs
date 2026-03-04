@@ -13,12 +13,15 @@ export default function AuthProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, fetchMe } = useAuthStore();
+  const { isAuthenticated, fetchMe, checkSessionExpiry } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Kiểm tra session có còn hạn không trước tiên (12h)
+    checkSessionExpiry();
+
     // Kiểm tra trạng thái auth khi component mount
     const checkAuth = async () => {
       if (isAuthenticated) {

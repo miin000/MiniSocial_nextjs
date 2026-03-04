@@ -17,12 +17,26 @@ export interface User {
   avatar?: string;
 }
 
+// Thời gian session tồn tại: 12 giờ (ms)
+const SESSION_DURATION_MS = 12 * 60 * 60 * 1000
+
+function setAuthCookie() {
+  if (typeof document === 'undefined') return
+  document.cookie = `auth-token=1; max-age=${12 * 60 * 60}; path=/; SameSite=Strict`
+}
+
+function clearAuthCookie() {
+  if (typeof document === 'undefined') return
+  document.cookie = 'auth-token=; max-age=0; path=/; SameSite=Strict'
+}
+
 // Định nghĩa interface cho AuthState
 interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  loginAt: number | null; // timestamp đăng nhập
 
   // Actions
   login: (identifier: string, password: string) => Promise<boolean>;
@@ -30,6 +44,7 @@ interface AuthState {
   logout: () => void;
   setUser: (user: User | null) => void;
   fetchMe: () => Promise<void>;
+  checkSessionExpiry: () => void;
 }
 
 // Tạo Zustand store với persist middleware (lưu vào localStorage)
@@ -40,6 +55,7 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       isLoading: false,
+      loginAt: null,
 
       // Đăng nhập
       login: async (identifier: string, password: string) => {
@@ -48,12 +64,15 @@ export const useAuthStore = create<AuthState>()(
           const response = await api.post('/auth/login', { identifier, password });
           const { accessToken, user } = response.data;
 
+          const loginAt = Date.now()
           set({
             token: accessToken,
             user: user,
             isAuthenticated: true,
             isLoading: false,
+            loginAt,
           });
+          setAuthCookie()
 
           toast.success('Đăng nhập thành công!');
           return true;
@@ -88,12 +107,28 @@ export const useAuthStore = create<AuthState>()(
 
       // Đăng xuất
       logout: () => {
+        clearAuthCookie()
         set({
           user: null,
           token: null,
           isAuthenticated: false,
+          loginAt: null,
         });
         toast.success('Đã đăng xuất!');
+      },
+
+      // Kiểm tra session còn hạn không (gọi khi app khởi động)
+      checkSessionExpiry: () => {
+        const { loginAt, isAuthenticated } = get()
+        if (!isAuthenticated || !loginAt) return
+        if (Date.now() - loginAt > SESSION_DURATION_MS) {
+          clearAuthCookie()
+          set({ user: null, token: null, isAuthenticated: false, loginAt: null })
+          // Không toast ở đây vì có thể chưa mount
+        } else {
+          // Làm mới cookie cho đủ 12h từ lần check hiện tại
+          setAuthCookie()
+        }
       },
 
       // Set user
@@ -126,7 +161,23 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        loginAt: state.loginAt,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return
+        // Tự động logout nếu session đã hết 12h
+        if (state.isAuthenticated && state.loginAt) {
+          if (Date.now() - state.loginAt > SESSION_DURATION_MS) {
+            clearAuthCookie()
+            state.user = null
+            state.token = null
+            state.isAuthenticated = false
+            state.loginAt = null
+          } else {
+            setAuthCookie()
+          }
+        }
+      },
     }
   )
 );
