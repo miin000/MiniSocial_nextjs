@@ -41,3 +41,36 @@ export interface Group {
   createdAt: string
 }
 
+// Admin types
+export type UserRoleAdmin = 'ADMIN' | 'MODERATOR' | 'VIEWER'
+export type UserStatus = 'ACTIVE' | 'BLOCKED'
+
+export interface AdminAccount {
+  _id: string
+  username: string
+  email: string
+  full_name: string
+  roles_admin: UserRoleAdmin[]
+  status: UserStatus
+  last_login?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateAdminAccountRequest {
+  username: string
+  email: string
+  full_name: string
+  password: string
+  role: UserRoleAdmin
+}
+
+export interface UpdateAdminAccountRequest {
+  full_name?: string
+  email?: string
+}
+
+export interface UpdateAdminRoleRequest {
+  role: UserRoleAdmin
+}
+

@@ -24,12 +24,22 @@ const menu = [
     { label: "Posts Management", icon: FileText, href: "/dashboard/postmanagement" },
     { label: "Reports & Moderation", icon: AlertTriangle, href: "/dashboard/reports" },
     { label: "Groups & Communities", icon: Users2, href: "/dashboard/groups" },
+<<<<<<< HEAD
     { label: "Analytics & Statistics", icon: BarChart3, href: "/analytics" },
     { label: "Recommendation System", icon: BrainCircuit, href: "/dashboard/recommendation", adminOnly: true },
     { label: "System Settings", icon: Settings, href: "/settings" },
     { label: "Admin Accounts", icon: Shield, href: "/admins" },
     { label: "Logs & Activity", icon: ScrollText, href: "/logs" },
     { label: "User Activity Logs", icon: Activity, href: "/activity" },
+=======
+
+    { label: "Analytics & Statistics", icon: BarChart3, href: "/dashboard/analytics" },
+    { label: "System Settings", icon: Settings, href: "/dashboard/settings" },
+    { label: "Admin Accounts", icon: Shield, href: "/dashboard/admins" },
+    { label: "Logs & Activity", icon: ScrollText, href: "/dashboard/adminlogs" },
+    { label: "User Activity Logs", icon: Activity, href: "/dashboard/userlogs" },
+
+>>>>>>> 1c0cfa77ddbc61d177b7d37eac785185fc05044b
 ]
 
 export default function Sidebar() {

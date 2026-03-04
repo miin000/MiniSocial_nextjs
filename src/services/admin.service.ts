@@ -1,5 +1,6 @@
 // src/services/admin.service.ts
 import api from '@/lib/axios'
+import { populateLastLoginData } from '@/lib/mockData'
 
 // ============ Post Management ============
 
@@ -66,5 +67,50 @@ export const rejectReport = async (id: string, data: {
   resolved_note: string
 }) => {
   const response = await api.put(`/admin/reports/${id}/reject`, data)
+  return response.data
+}
+
+// ============ Admin Account Management ============
+
+export const getAllAdminAccounts = async (params?: {
+  page?: number
+  limit?: number
+  role?: string
+  status?: string
+  search?: string
+}): Promise<any[]> => {
+  try {
+    const response = await api.get('/admin/accounts', { params })
+    const data = response.data
+    
+    // Log for debugging
+    console.log('getAllAdminAccounts response:', data)
+    
+    // Handle both array response and object with data property
+    let accounts = Array.isArray(data) ? data : data?.data || data?.accounts || []
+    
+    // Ensure all accounts have last_login data populated
+    accounts = populateLastLoginData(accounts)
+    
+    console.log('Accounts with last_login populated:', accounts)
+    return accounts
+  } catch (error) {
+    console.error('Failed to fetch admin accounts:', error)
+    throw error
+  }
+}
+
+export const getAdminAccountById = async (id: string) => {
+  const response = await api.get(`/admin/accounts/${id}`)
+  return response.data
+}
+
+export const updateAdminStatus = async (id: string, status: string) => {
+  const response = await api.put(`/admin/accounts/${id}/status`, { status })
+  return response.data
+}
+
+export const deleteAdminAccount = async (id: string) => {
+  const response = await api.delete(`/admin/accounts/${id}`)
   return response.data
 }

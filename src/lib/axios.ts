@@ -10,33 +10,40 @@ const api = axios.create({
   },
 });
 
-// Cấu hình "Interceptor" (Người can thiệp)
-// Đoạn code này sẽ chạy *trước khi* bất kỳ request nào được gửi đi
+// Attach Authorization header to each request. Prefer zustand token but
+// fall back to persisted localStorage entry so requests from refreshed pages
+// still include the JWT.
 api.interceptors.request.use(
   (config) => {
-    // Lấy token từ Zustand store (lấy trực tiếp state)
-    const token = useAuthStore.getState().token;
+    try {
+      // Try zustand first
+      let token = useAuthStore.getState?.().token
 
-    if (token) {
-      // Nếu có token, gắn nó vào header Authorization
-      config.headers.Authorization = `Bearer ${token}`;
+      // If not found, try localStorage (persisted zustand key)
+      if (!token && typeof window !== 'undefined') {
+        const raw = localStorage.getItem('auth-storage')
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw)
+            token = parsed?.token || parsed?.accessToken || parsed?.access_token
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
+
+      if (token) {
+        config.headers = config.headers || {}
+        config.headers.Authorization = `Bearer ${token}`
+      }
+    } catch (e) {
+      // do not block requests on token errors
+      // console.warn('Failed to attach auth token', e)
     }
-    return config;
+
+    return config
   },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
-
-  console.log("AXIOS TOKEN =", token);
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
+  (error) => Promise.reject(error)
+)
 
 export default api;
