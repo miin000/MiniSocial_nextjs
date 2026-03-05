@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import {
     Download,
     FileText,
@@ -12,184 +12,137 @@ import {
     Users,
     Search,
     Filter,
+    ChevronLeft,
+    ChevronRight,
+    Pencil,
+    Trash2,
+    PenTool,
 } from "lucide-react"
 import api from "@/lib/axios"
 
-interface Log {
+/* ===================== TYPES ===================== */
+
+interface ActivityLog {
     _id: string
-    admin_username: string
-    action: string
-    entity_type: string
-    created_at: string
-    old_value?: any
-    new_value?: any
+    user_id: string
+    activity_date: string
+    activity_type: string
+    activity_count: number
+    username: string
+    full_name?: string
+    avatar_url?: string
 }
 
+/* ===================== ICON & COLOR MAP ===================== */
+
+const activityConfig: Record<string, { icon: React.ReactNode; color: string; bg: string; label: string }> = {
+    login:        { icon: <LogIn className="w-5 h-5" />,          color: "text-purple-500", bg: "bg-purple-100", label: "Đăng nhập" },
+    post:         { icon: <FileText className="w-5 h-5" />,       color: "text-blue-500",   bg: "bg-blue-100",   label: "Bài viết" },
+    create_post:  { icon: <PenTool className="w-5 h-5" />,        color: "text-blue-500",   bg: "bg-blue-100",   label: "Tạo bài viết" },
+    edit_post:    { icon: <Pencil className="w-5 h-5" />,         color: "text-cyan-500",   bg: "bg-cyan-100",   label: "Sửa bài viết" },
+    delete_post:  { icon: <Trash2 className="w-5 h-5" />,         color: "text-red-500",    bg: "bg-red-100",    label: "Xóa bài viết" },
+    like:         { icon: <Heart className="w-5 h-5" />,          color: "text-pink-500",   bg: "bg-pink-100",   label: "Thích" },
+    comment:      { icon: <MessageCircle className="w-5 h-5" />,  color: "text-green-500",  bg: "bg-green-100",  label: "Bình luận" },
+    share:        { icon: <Share2 className="w-5 h-5" />,         color: "text-teal-500",   bg: "bg-teal-100",   label: "Chia sẻ" },
+    message:      { icon: <MessageCircle className="w-5 h-5" />,  color: "text-indigo-500", bg: "bg-indigo-100", label: "Tin nhắn" },
+    create_group: { icon: <Users className="w-5 h-5" />,          color: "text-indigo-500", bg: "bg-indigo-100", label: "Tạo nhóm" },
+    edit_group:   { icon: <Pencil className="w-5 h-5" />,         color: "text-indigo-500", bg: "bg-indigo-100", label: "Sửa nhóm" },
+    delete_group: { icon: <Trash2 className="w-5 h-5" />,         color: "text-red-500",    bg: "bg-red-100",    label: "Xóa nhóm" },
+    report_post:  { icon: <AlertCircle className="w-5 h-5" />,    color: "text-orange-500", bg: "bg-orange-100", label: "Báo cáo" },
+}
+
+const defaultConfig = { icon: <FileText className="w-5 h-5" />, color: "text-gray-500", bg: "bg-gray-100", label: "Khác" }
+
+const getConfig = (type: string) => activityConfig[type] || defaultConfig
+
+const activityTypes = [
+    "login", "post", "create_post", "edit_post", "delete_post",
+    "like", "comment", "share", "message",
+    "create_group", "edit_group", "delete_group", "report_post",
+]
+
 export default function UserActivityLogsPage() {
-    const [logs, setLogs] = useState<Log[]>([])
+    const [logs, setLogs] = useState<ActivityLog[]>([])
+    const [loading, setLoading] = useState(false)
     const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
-    const [loading, setLoading] = useState(false)
+    const [total, setTotal] = useState(0)
 
     const [search, setSearch] = useState("")
     const [showFilters, setShowFilters] = useState(false)
-    const [type, setType] = useState("all")
-    const [dateRange, setDateRange] = useState("24h")
-
-    /* ================= FETCH LOGS ================= */
-
-    useEffect(() => {
-        fetchLogs(1)
-    }, [search, type, dateRange])
+    const [typeFilter, setTypeFilter] = useState("")
+    const [dateFrom, setDateFrom] = useState("")
+    const [dateTo, setDateTo] = useState("")
 
     useEffect(() => {
-        fetchLogs(page)
-    }, [page])
+        setPage(1)
+    }, [search, typeFilter, dateFrom, dateTo])
 
-    const fetchLogs = async (currentPage: number) => {
+    useEffect(() => {
+        loadLogs()
+    }, [page, search, typeFilter, dateFrom, dateTo])
+
+    const loadLogs = useCallback(async () => {
         try {
             setLoading(true)
+            const params: Record<string, any> = { page, limit: 20 }
+            if (search) params.search = search
+            if (typeFilter) params.activity_type = typeFilter
+            if (dateFrom) params.from = dateFrom
+            if (dateTo) params.to = dateTo
 
-            const res = await api.get(
-                `/admin/logs?page=${currentPage}&limit=5&search=${search}&type=${type}&dateRange=${dateRange}`
-            )
-
-            setLogs((prev) =>
-                currentPage === 1
-                    ? res.data.logs
-                    : [...prev, ...res.data.logs]
-            )
-
-            setTotalPages(res.data.totalPages)
+            const res = await api.get("/admin/user-activity", { params })
+            setLogs(res.data.logs || [])
+            setTotalPages(res.data.totalPages || 1)
+            setTotal(res.data.total || 0)
         } catch (err) {
-            console.error(err)
+            console.error("Load user activity logs failed", err)
+            setLogs([])
         } finally {
             setLoading(false)
         }
-    }
+    }, [page, search, typeFilter, dateFrom, dateTo])
 
-    /* ================= ICON ================= */
+    const handleExport = async () => {
+        try {
+            const params: Record<string, any> = {}
+            if (search) params.search = search
+            if (typeFilter) params.activity_type = typeFilter
+            if (dateFrom) params.from = dateFrom
+            if (dateTo) params.to = dateTo
 
-    const getIcon = (action: string) => {
-        const lower = action?.toLowerCase() || ""
-
-        if (lower.includes("login"))
-            return <LogIn className="text-purple-500 w-5 h-5" />
-
-        if (lower.includes("like"))
-            return <Heart className="text-green-500 w-5 h-5" />
-
-        if (lower.includes("comment"))
-            return <MessageCircle className="text-green-500 w-5 h-5" />
-
-        if (lower.includes("share"))
-            return <Share2 className="text-green-500 w-5 h-5" />
-
-        if (lower.includes("report"))
-            return <AlertCircle className="text-red-500 w-5 h-5" />
-
-        if (lower.includes("group"))
-            return <Users className="text-indigo-500 w-5 h-5" />
-
-        return <FileText className="text-blue-500 w-5 h-5" />
-    }
-
-    const getBadgeColor = (action: string) => {
-        const lower = action?.toLowerCase() || ""
-
-        if (lower.includes("report"))
-            return "bg-red-100 text-red-600"
-
-        if (
-            lower.includes("like") ||
-            lower.includes("comment") ||
-            lower.includes("share")
-        )
-            return "bg-green-100 text-green-600"
-
-        if (lower.includes("post"))
-            return "bg-blue-100 text-blue-600"
-
-        if (lower.includes("login"))
-            return "bg-purple-100 text-purple-600"
-
-        return "bg-gray-100 text-gray-600"
-    }
-
-    /* ================= RENDER CONTENT ================= */
-
-    const renderContent = (log: Log) => {
-        if (!log.new_value) return null
-
-        if (typeof log.new_value === "object") {
-            if (log.new_value.content)
-                return (
-                    <p className="text-gray-600 mt-1 text-sm">
-                        "{log.new_value.content}"
-                    </p>
-                )
-
-            if (log.new_value.reason)
-                return (
-                    <p className="text-gray-600 mt-1 text-sm">
-                        Reason: {log.new_value.reason}
-                    </p>
-                )
+            const res = await api.get("/admin/user-activity/export", { params })
+            const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: "application/json" })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement("a")
+            a.href = url
+            a.download = `user-activity-${new Date().toISOString().slice(0, 10)}.json`
+            document.body.appendChild(a)
+            a.click()
+            a.remove()
+            URL.revokeObjectURL(url)
+        } catch (err) {
+            console.error("Export failed", err)
         }
-
-        return null
     }
 
-    /* ================= STATS ================= */
+    /* ===================== SUMMARY STATS ===================== */
 
-    const stats = [
-        {
-            title: "Logins",
-            value: logs.filter((l) =>
-                l.action?.toLowerCase().includes("login")
-            ).length,
-            icon: <LogIn className="text-purple-500 w-6 h-6" />,
-            bg: "bg-purple-100",
-        },
-        {
-            title: "Posts",
-            value: logs.filter((l) =>
-                l.action?.toLowerCase().includes("post")
-            ).length,
-            icon: <FileText className="text-blue-500 w-6 h-6" />,
-            bg: "bg-blue-100",
-        },
-        {
-            title: "Interactions",
-            value: logs.filter(
-                (l) =>
-                    l.action?.toLowerCase().includes("like") ||
-                    l.action?.toLowerCase().includes("comment") ||
-                    l.action?.toLowerCase().includes("share")
-            ).length,
-            icon: <Heart className="text-green-500 w-6 h-6" />,
-            bg: "bg-green-100",
-        },
-        {
-            title: "Groups",
-            value: logs.filter((l) =>
-                l.action?.toLowerCase().includes("group")
-            ).length,
-            icon: <Users className="text-indigo-500 w-6 h-6" />,
-            bg: "bg-indigo-100",
-        },
-        {
-            title: "Reports",
-            value: logs.filter((l) =>
-                l.action?.toLowerCase().includes("report")
-            ).length,
-            icon: <AlertCircle className="text-red-500 w-6 h-6" />,
-            bg: "bg-red-100",
-        },
+    const typeCounts = logs.reduce<Record<string, number>>((acc, l) => {
+        acc[l.activity_type] = (acc[l.activity_type] || 0) + l.activity_count
+        return acc
+    }, {})
+
+    const statCards = [
+        { key: "login",   title: "Đăng nhập" },
+        { key: "like",    title: "Lượt thích" },
+        { key: "comment", title: "Bình luận" },
+        { key: "post",    title: "Bài viết" },
+        { key: "report_post", title: "Báo cáo" },
     ]
 
     return (
-        <div className="min-h-screen bg-gray-50 p-8 space-y-8">
+        <div className="p-6 space-y-6">
 
             {/* HEADER */}
             <div className="flex justify-between items-center">
@@ -198,166 +151,169 @@ export default function UserActivityLogsPage() {
                         User Activity Logs
                     </h1>
                     <p className="text-gray-500 mt-1">
-                        Track all user actions and behaviors
+                        Ghi lại hoạt động của người dùng (vai trò: User)
                     </p>
                 </div>
 
-                <button className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl shadow-sm hover:bg-blue-700 transition">
+                <button
+                    onClick={handleExport}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition"
+                >
                     <Download size={18} />
-                    Export Logs
+                    Export
                 </button>
             </div>
 
+            {/* STAT CARDS */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {statCards.map((s) => {
+                    const cfg = getConfig(s.key)
+                    return (
+                        <div key={s.key} className="bg-white rounded-xl border p-4 flex items-center gap-3 shadow-sm">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${cfg.bg}`}>
+                                <span className={cfg.color}>{cfg.icon}</span>
+                            </div>
+                            <div>
+                                <p className="text-gray-500 text-sm">{s.title}</p>
+                                <p className="text-xl font-bold text-gray-900">{typeCounts[s.key] || 0}</p>
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+
             {/* SEARCH + FILTER */}
-            <div className="bg-white rounded-2xl shadow-sm p-4 space-y-4">
-                <div className="flex gap-4 items-center">
-                    <div className="flex items-center flex-1 bg-gray-50 px-4 py-2 rounded-xl">
-                        <Search className="w-4 h-4 text-gray-400 mr-2" />
+            <div className="bg-white border rounded-xl p-4 space-y-4">
+                <div className="flex gap-4">
+                    <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             value={search}
-                            onChange={(e) => {
-                                setSearch(e.target.value)
-                                setPage(1)
-                            }}
-                            placeholder="Search by user, action, or target..."
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Tìm theo tên người dùng, email..."
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-700"
                         />
                     </div>
-
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className="flex items-center gap-2 border px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100"
+                        className={`flex items-center gap-2 px-4 py-2.5 border rounded-lg font-medium transition ${
+                            showFilters ? "bg-blue-50 border-blue-300 text-blue-700" : "border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-700"
+                        }`}
                     >
-                        <Filter size={16} />
-                        Filters
+                        <Filter size={18} />
+                        Bộ lọc
                     </button>
                 </div>
 
                 {showFilters && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
                         <div>
-                            <label className="text-sm text-gray-500">
-                                Type
-                            </label>
+                            <label className="text-xs text-gray-500 mb-1 block">Loại hoạt động</label>
                             <select
-                                value={type}
-                                onChange={(e) => {
-                                    setType(e.target.value)
-                                    setPage(1)
-                                }}
-                                className="w-full mt-1 border rounded-xl px-3 py-2 text-sm"
+                                value={typeFilter}
+                                onChange={(e) => setTypeFilter(e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
                             >
-                                <option value="all">All Types</option>
-                                <option value="post">Post</option>
-                                <option value="interaction">
-                                    Interaction
-                                </option>
-                                <option value="report">Report</option>
-                                <option value="login">Login</option>
+                                <option value="">Tất cả</option>
+                                {activityTypes.map((t) => (
+                                    <option key={t} value={t}>{getConfig(t).label}</option>
+                                ))}
                             </select>
                         </div>
-
                         <div>
-                            <label className="text-sm text-gray-500">
-                                Date Range
-                            </label>
-                            <select
-                                value={dateRange}
-                                onChange={(e) => {
-                                    setDateRange(e.target.value)
-                                    setPage(1)
-                                }}
-                                className="w-full mt-1 border rounded-xl px-3 py-2 text-sm"
-                            >
-                                <option value="24h">Last 24 hours</option>
-                                <option value="7d">Last 7 days</option>
-                                <option value="30d">Last 30 days</option>
-                            </select>
+                            <label className="text-xs text-gray-500 mb-1 block">Từ ngày</label>
+                            <input
+                                type="date"
+                                value={dateFrom}
+                                onChange={(e) => setDateFrom(e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Đến ngày</label>
+                            <input
+                                type="date"
+                                value={dateTo}
+                                onChange={(e) => setDateTo(e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                            />
                         </div>
                     </div>
                 )}
             </div>
 
             {/* LOG LIST */}
-            <div className="bg-white rounded-2xl shadow-sm divide-y">
-                {logs.map((log) => (
-                    <div
-                        key={log._id}
-                        className="flex justify-between p-6 hover:bg-gray-50 transition"
-                    >
-                        <div className="flex gap-4 w-full">
-                            <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
-                                {getIcon(log.action)}
+            <div className="bg-white rounded-xl border divide-y">
+                {loading && logs.length === 0 ? (
+                    <div className="p-12 text-center text-gray-400">Đang tải...</div>
+                ) : logs.length === 0 ? (
+                    <div className="p-12 text-center text-gray-400">Không có hoạt động nào</div>
+                ) : (
+                    logs.map((log) => {
+                        const cfg = getConfig(log.activity_type)
+                        return (
+                            <div key={log._id} className="flex justify-between p-5 hover:bg-gray-50 transition">
+                                <div className="flex gap-4">
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${cfg.bg}`}>
+                                        <span className={cfg.color}>{cfg.icon}</span>
+                                    </div>
+
+                                    <div>
+                                        <p className="font-semibold text-gray-900">
+                                            <span className="text-blue-600">{log.username}</span>
+                                            {log.full_name && (
+                                                <span className="text-gray-400 font-normal ml-1 text-sm">
+                                                    ({log.full_name})
+                                                </span>
+                                            )}
+                                        </p>
+
+                                        <p className="text-sm text-gray-600 mt-0.5">
+                                            {cfg.label}
+                                            <span className="ml-2 font-semibold text-gray-900">
+                                                x{log.activity_count}
+                                            </span>
+                                        </p>
+
+                                        <span className={`inline-block mt-2 px-2.5 py-0.5 text-xs font-medium rounded-full ${cfg.bg} ${cfg.color}`}>
+                                            {log.activity_type.replace(/_/g, " ")}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="text-right text-sm text-gray-500 whitespace-nowrap ml-4">
+                                    {new Date(log.activity_date).toLocaleDateString("vi-VN")}
+                                </div>
                             </div>
-
-                            <div className="flex-1">
-                                <p className="font-semibold text-blue-600">
-                                    {log.admin_username}
-                                    <span className="text-gray-500 ml-2 font-normal">
-                                        • {log.action?.replaceAll("_", " ")}
-                                    </span>
-                                </p>
-
-                                <p className="text-gray-600 mt-1 text-sm">
-                                    Entity: {log.entity_type}
-                                </p>
-
-                                {renderContent(log)}
-
-                                <span
-                                    className={`inline-block mt-3 px-3 py-1 text-xs font-medium rounded-full ${getBadgeColor(
-                                        log.action
-                                    )}`}
-                                >
-                                    {log.entity_type}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="text-right text-sm text-gray-500 whitespace-nowrap ml-6">
-                            {new Date(log.created_at).toLocaleTimeString()}
-                            <br />
-                            {new Date(log.created_at).toLocaleDateString()}
-                        </div>
-                    </div>
-                ))}
-
-                {page < totalPages && (
-                    <div className="text-center p-6">
-                        <button
-                            onClick={() => setPage(page + 1)}
-                            className="text-blue-600 hover:underline font-medium"
-                        >
-                            {loading ? "Loading..." : "Load More Logs"}
-                        </button>
-                    </div>
+                        )
+                    })
                 )}
             </div>
 
-            {/* STATS */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                {stats.map((item) => (
-                    <div
-                        key={item.title}
-                        className="bg-white rounded-2xl shadow-sm p-6 flex items-center gap-4"
-                    >
-                        <div
-                            className={`w-12 h-12 rounded-xl flex items-center justify-center ${item.bg}`}
+            {/* PAGINATION */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-500">
+                        Trang {page} / {totalPages} ({total} kết quả)
+                    </p>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setPage(Math.max(1, page - 1))}
+                            disabled={page <= 1}
+                            className="p-2 border rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
-                            {item.icon}
-                        </div>
-
-                        <div>
-                            <p className="text-gray-500 text-sm">
-                                {item.title}
-                            </p>
-                            <p className="text-2xl font-semibold">
-                                {item.value}
-                            </p>
-                        </div>
+                            <ChevronLeft size={18} />
+                        </button>
+                        <button
+                            onClick={() => setPage(Math.min(totalPages, page + 1))}
+                            disabled={page >= totalPages}
+                            className="p-2 border rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            <ChevronRight size={18} />
+                        </button>
                     </div>
-                ))}
-            </div>
+                </div>
+            )}
         </div>
     )
 }

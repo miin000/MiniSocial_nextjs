@@ -57,6 +57,7 @@ export default function AdminAccountForm({ initialData, isEditMode = false, onSu
         ? {
             email: formData.email,
             full_name: formData.full_name,
+            role: formData.role,
           }
         : formData
 

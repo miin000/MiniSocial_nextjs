@@ -12,8 +12,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const id = params.id
     const body = await request.json()
 
-    // Update user's role - backend endpoint
-    const response = await apiClient.put(`/users/${id}`, { roles_admin: [body.role] }, {
+    // Update user's role - backend endpoint: PUT /admin/accounts/:id
+    const response = await apiClient.put(`/admin/accounts/${id}`, { role: body.role }, {
       headers: {
         Authorization: authHeader || '',
       },

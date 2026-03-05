@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const response = await apiClient.get('/admin/users', {
+    const response = await apiClient.get('/admin/accounts', {
       headers: {
         Authorization: authHeader,
         'Content-Type': 'application/json',
@@ -55,7 +55,6 @@ export async function GET(request: NextRequest) {
     })
         
     const adminUsers = response.data
-      .filter((user: any) => user.roles_admin && user.roles_admin.length > 0)
       .map((user: any) => {
         // Generate last_login if missing
         const lastLogin = user.last_login || generateRandomLastLogin().toISOString();
@@ -92,13 +91,35 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('Authorization')
     const body = await request.json()
     
-    const response = await apiClient.post('/auth/register', body, {
+    // Step 1: Register the user
+    const registerResponse = await apiClient.post('/auth/register', {
+      username: body.username,
+      email: body.email,
+      password: body.password,
+      full_name: body.full_name,
+    }, {
       headers: {
         Authorization: authHeader || '',
       },
     })
 
-    return NextResponse.json(response.data, { status: 201 })
+    const newUser = registerResponse.data
+
+    // Step 2: Assign admin role if specified
+    if (body.role && body.role !== 'NONE') {
+      const userId = newUser._id || newUser.user?._id
+      if (userId) {
+        await apiClient.post(`/admin/accounts/${userId}`, {
+          role: body.role,
+        }, {
+          headers: {
+            Authorization: authHeader || '',
+          },
+        })
+      }
+    }
+
+    return NextResponse.json(newUser, { status: 201 })
   } catch (error: any) {
     console.error('Error creating admin account:', error.message)
     return NextResponse.json(

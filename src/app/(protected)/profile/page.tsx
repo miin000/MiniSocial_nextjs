@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAuthStore } from '@/store/auth.store'
 import { useRouter } from 'next/navigation'
-import { Upload, Save, X, Camera, User as UserIcon, Mail, Phone, Calendar, Shield, Bell, Lock, LogOut } from 'lucide-react'
+import { Upload, Save, X, Camera, User as UserIcon, Mail, Phone, Calendar, Shield, Lock, LogOut } from 'lucide-react'
 import api from '@/lib/axios'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
@@ -37,12 +37,6 @@ export default function ProfilePage() {
         username: user?.username || '',
         email: user?.email || '',
         phone: '',
-    })
-
-    const [preferences, setPreferences] = useState({
-        emailNotifications: true,
-        twoFactorAuth: false,
-        activityAlerts: true,
     })
 
     useEffect(() => {
@@ -139,13 +133,6 @@ export default function ProfilePage() {
         }))
     }
 
-    const handlePreferenceChange = (key: keyof typeof preferences) => {
-        setPreferences(prev => ({
-            ...prev,
-            [key]: !prev[key],
-        }))
-    }
-
     const handleSaveProfile = async () => {
         setIsSaving(true)
         try {
@@ -168,24 +155,6 @@ export default function ProfilePage() {
         } catch (error: any) {
             console.error('Profile update error:', error)
             const errorMsg = error.response?.data?.message || error.message || 'Cập nhật thất bại!'
-            toast.error(errorMsg)
-        } finally {
-            setIsSaving(false)
-        }
-    }
-
-    const handleSavePreferences = async () => {
-        setIsSaving(true)
-        try {
-            await api.patch('/users/preferences', {
-                email_notifications: preferences.emailNotifications,
-                two_factor_auth: preferences.twoFactorAuth,
-                activity_alerts: preferences.activityAlerts,
-            })
-            toast.success('Cập nhật cài đặt thành công!')
-        } catch (error: any) {
-            console.error('Preferences update error:', error)
-            const errorMsg = error.response?.data?.message || error.message || 'Cập nhật cài đặt thất bại!'
             toast.error(errorMsg)
         } finally {
             setIsSaving(false)
@@ -368,7 +337,11 @@ export default function ProfilePage() {
                                         <p className="text-xs text-gray-500">Quyền hạn tài khoản</p>
                                     </div>
                                 </div>
-                                <p className="font-semibold text-gray-900">{userInfo.roles_admin || 'User'}</p>
+                                <p className="font-semibold text-gray-900">
+                                    {Array.isArray(userInfo.roles_admin) 
+                                        ? userInfo.roles_admin.filter((r: string) => r !== 'NONE').join(', ') || 'User'
+                                        : userInfo.roles_admin || 'User'}
+                                </p>
                             </div>
 
                             {/* Joined Date */}
@@ -382,90 +355,6 @@ export default function ProfilePage() {
                                 </div>
                                 <p className="font-semibold text-gray-900">{formattedDate}</p>
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Preferences */}
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Cài đặt Preferences</h2>
-                        <div className="space-y-3">
-                            {/* Email Notifications */}
-                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                                <div className="flex items-center gap-3">
-                                    <Mail size={18} className="text-blue-600" />
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">Thông báo qua Email</p>
-                                        <p className="text-xs text-gray-500">Nhận email thông báo từ hệ thống</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => handlePreferenceChange('emailNotifications')}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                                        preferences.emailNotifications ? 'bg-blue-600' : 'bg-gray-300'
-                                    }`}
-                                >
-                                    <span
-                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                                            preferences.emailNotifications ? 'translate-x-6' : 'translate-x-1'
-                                        }`}
-                                    />
-                                </button>
-                            </div>
-
-                            {/* Activity Alerts */}
-                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                                <div className="flex items-center gap-3">
-                                    <Bell size={18} className="text-orange-600" />
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">Cảnh báo hoạt động</p>
-                                        <p className="text-xs text-gray-500">Nhận thông báo về hoạt động tài khoản</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => handlePreferenceChange('activityAlerts')}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                                        preferences.activityAlerts ? 'bg-blue-600' : 'bg-gray-300'
-                                    }`}
-                                >
-                                    <span
-                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                                            preferences.activityAlerts ? 'translate-x-6' : 'translate-x-1'
-                                        }`}
-                                    />
-                                </button>
-                            </div>
-
-                            {/* Two Factor Authentication */}
-                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                                <div className="flex items-center gap-3">
-                                    <Lock size={18} className="text-red-600" />
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">Xác thực 2 yếu tố</p>
-                                        <p className="text-xs text-gray-500">Bảo vệ tài khoản bằng 2FA</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => handlePreferenceChange('twoFactorAuth')}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                                        preferences.twoFactorAuth ? 'bg-blue-600' : 'bg-gray-300'
-                                    }`}
-                                >
-                                    <span
-                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                                            preferences.twoFactorAuth ? 'translate-x-6' : 'translate-x-1'
-                                        }`}
-                                    />
-                                </button>
-                            </div>
-
-                            <button
-                                onClick={handleSavePreferences}
-                                disabled={isSaving}
-                                className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-2 rounded-lg transition"
-                            >
-                                <Save size={16} />
-                                {isSaving ? 'Đang lưu...' : 'Lưu Preferences'}
-                            </button>
                         </div>
                     </div>
 

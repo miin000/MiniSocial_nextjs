@@ -1,39 +1,39 @@
-// src/services/settings.service.ts
-import api from '@/lib/axios'
+import axios from '@/lib/axios'
 
-export interface SystemSettings {
-  post_limit_per_day?: number
-  comments_per_day?: number
-  max_file_size_mb?: number
-  banned_keywords?: string[]
-  auto_report_threshold?: number
-  auto_moderation?: boolean
-  modules?: {
-    groups?: boolean
-    chat?: boolean
-    notifications?: boolean
-  }
-  maintenance_mode?: boolean
+export interface SystemSetting {
+  _id: string
+  setting_key: string
+  setting_value: string
+  data_type: 'string' | 'number' | 'boolean' | 'json'
+  description?: string
+  is_public: boolean
+  updated_by?: string
+  createdAt: string
+  updatedAt: string
 }
 
-export const fetchSystemSettings = async (): Promise<SystemSettings | null> => {
-  // Use the browser's fetch to call the Next.js internal API route relative to origin.
-  const resp = await fetch('/api/admin/system-settings')
-  if (!resp.ok) throw new Error(`Failed to fetch settings: ${resp.status}`)
-  return await resp.json()
+export const fetchSystemSettings = async (params?: any) => {
+  // backend endpoint uses /admin/settings
+  const res = await axios.get('/admin/settings', { params })
+  return res.data
 }
 
-export const saveSystemSettings = async (data: SystemSettings) => {
-  const resp = await fetch('/api/admin/system-settings', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  })
-  if (!resp.ok) throw new Error(`Failed to save settings: ${resp.status}`)
-  return await resp.json()
+export const createSystemSetting = async (data: any) => {
+  const res = await axios.post('/admin/settings', data)
+  return res.data
 }
 
-export default {
-  fetchSystemSettings,
-  saveSystemSettings,
+export const updateSystemSetting = async (key: string, data: any) => {
+  const res = await axios.put(`/admin/settings/${key}`, data)
+  return res.data
+}
+
+export const deleteSystemSetting = async (key: string) => {
+  const res = await axios.delete(`/admin/settings/${key}`)
+  return res.data
+}
+
+export const fetchSystemLogs = async (params?: any) => {
+  const res = await axios.get('/admin/system-logs', { params })
+  return res.data
 }

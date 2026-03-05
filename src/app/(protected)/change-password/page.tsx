@@ -140,10 +140,9 @@ export default function ChangePasswordPage() {
 
         setIsLoading(true)
         try {
-            await api.post('/auth/change-password', {
-                current_password: passwords.current,
+            await api.post('/users/change-password', {
+                old_password: passwords.current,
                 new_password: passwords.new,
-                confirm_password: passwords.confirm,
             })
 
             toast.success('Đổi mật khẩu thành công!')

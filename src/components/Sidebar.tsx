@@ -28,7 +28,7 @@ const menu = [
     { label: "Recommendation System", icon: BrainCircuit, href: "/dashboard/recommendation", adminOnly: true },
     { label: "System Settings", icon: Settings, href: "/settings" },
     { label: "Admin Accounts", icon: Shield, href: "/admins" },
-    { label: "Logs & Activity", icon: ScrollText, href: "/dashboard/adminlogs" },
+    { label: "Admin Activity Logs", icon: ScrollText, href: "/dashboard/adminlogs" },
     { label: "User Activity Logs", icon: Activity, href: "/dashboard/userlogs" },
 ]
 

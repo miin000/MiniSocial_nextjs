@@ -15,9 +15,8 @@ export interface UpdatePreferencesData {
 }
 
 export interface ChangePasswordData {
-  current_password: string
+  old_password: string
   new_password: string
-  confirm_password: string
 }
 
 /**
@@ -48,7 +47,7 @@ export const updateUserPreferences = async (data: UpdatePreferencesData) => {
  * Đổi mật khẩu
  */
 export const changePassword = async (data: ChangePasswordData) => {
-  const response = await api.post('/auth/change-password', data)
+  const response = await api.post('/users/change-password', data)
   return response.data
 }
 

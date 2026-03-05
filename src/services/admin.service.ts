@@ -106,7 +106,56 @@ export const getAdminAccountById = async (id: string) => {
 }
 
 export const updateAdminStatus = async (id: string, status: string) => {
-  const response = await api.put(`/admin/accounts/${id}/status`, { status })
+  // backend exposes block/unblock on users (admin controller), adjust accordingly
+  if (status === 'BLOCKED') {
+    const response = await api.put(`/admin/users/${id}/block`)
+    return response.data
+  } else {
+    const response = await api.put(`/admin/users/${id}/unblock`)
+    return response.data
+  }
+}
+
+export const createAdminAccount = async (data: {
+  username: string
+  email: string
+  password: string
+  full_name: string
+  role?: string
+}) => {
+  // Step 1: Register the user
+  const registerResponse = await api.post('/auth/register', {
+    username: data.username,
+    email: data.email,
+    password: data.password,
+    full_name: data.full_name,
+  })
+
+  const newUser = registerResponse.data
+
+  // Step 2: Assign admin role if specified
+  if (data.role && data.role !== 'NONE') {
+    const userId = newUser._id || newUser.user?._id
+    if (userId) {
+      await api.post(`/admin/accounts/${userId}`, {
+        role: data.role,
+      })
+    }
+  }
+
+  return newUser
+}
+
+export const updateAdminAccount = async (id: string, data: { role?: string; email?: string; full_name?: string }) => {
+  if (data.role) {
+    const response = await api.put(`/admin/accounts/${id}`, { role: data.role })
+    return response.data
+  }
+  return { message: 'No changes applied' }
+}
+
+export const updateAdminRole = async (id: string, data: { role: string }) => {
+  const response = await api.put(`/admin/accounts/${id}`, { role: data.role })
   return response.data
 }
 

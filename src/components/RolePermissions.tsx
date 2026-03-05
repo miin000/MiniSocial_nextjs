@@ -31,10 +31,14 @@ const ROLE_PERMISSIONS = {
   },
 }
 
-export default function RolePermissions() {
+export default function RolePermissions({ selectedRole }: { selectedRole?: string } = {}) {
+  const entries = selectedRole
+    ? Object.entries(ROLE_PERMISSIONS).filter(([role]) => role === selectedRole)
+    : Object.entries(ROLE_PERMISSIONS)
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 font-['Times_New_Roman'] text-gray-800">
-      {Object.entries(ROLE_PERMISSIONS).map(([role, data]) => (
+    <div className={`grid grid-cols-1 ${selectedRole ? '' : 'md:grid-cols-3'} gap-8 font-['Times_New_Roman'] text-gray-800`}>
+      {entries.map(([role, data]) => (
         <div
           key={role}
           className="bg-white rounded-xl shadow-sm border p-6"
