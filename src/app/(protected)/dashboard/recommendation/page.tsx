@@ -127,6 +127,11 @@ export default function RecommendationPage() {
     const [simPostMap, setSimPostMap] = useState<Record<string, any>>({})
     const [queryPostInfo, setQueryPostInfo] = useState<any | null>(null)
 
+    // ── Call all ML endpoints ───────────────────────────────────────────────
+    const [allLoading, setAllLoading] = useState(false)
+    const [allError, setAllError] = useState<string | null>(null)
+    const [allOutput, setAllOutput] = useState<Record<string, unknown> | null>(null)
+
     // ── Admin guard ──────────────────────────────────────────────────────────
     useEffect(() => {
         if (!isAuthenticated) {
@@ -274,6 +279,49 @@ export default function RecommendationPage() {
         }
     }, [postIdQuery])
 
+    const callAllEndpoints = useCallback(async () => {
+        const uid = userIdQuery.trim()
+        const pid = postIdQuery.trim()
+        if (!uid || !pid) {
+            setAllError("Vui lòng nhập cả user_id và post_id để gọi đầy đủ tất cả endpoint")
+            return
+        }
+
+        setAllLoading(true)
+        setAllError(null)
+        setAllOutput(null)
+        try {
+            const healthRes = await mlService.health()
+            const statsRes = await mlService.stats()
+            const trainRes = await mlService.train()
+            const evalRes = await mlService.evaluate(k)
+            const recRes = await mlService.recommend(uid)
+            const simRes = await mlService.similar(pid)
+
+            setAllOutput({
+                health: healthRes,
+                stats: statsRes,
+                train: trainRes,
+                evaluate: evalRes,
+                recommend: recRes,
+                similar: simRes,
+            })
+
+            // Sync main panels with latest values
+            setHealth(healthRes)
+            setStats(statsRes)
+            setTrainResult(trainRes)
+            setEvalResult(evalRes)
+            setRecResult(recRes)
+            setSimResult(simRes)
+            setLastRefresh(new Date())
+        } catch (e: any) {
+            setAllError(e.message ?? "Không thể gọi tất cả endpoint")
+        } finally {
+            setAllLoading(false)
+        }
+    }, [userIdQuery, postIdQuery, k])
+
     useEffect(() => {
         if (isAuthenticated && user?.roles_admin) {
             fetchAll()
@@ -354,6 +402,47 @@ export default function RecommendationPage() {
                         </span>
                     )}
                 </div>
+            </section>
+
+            {/* ── Call all endpoints ── */}
+            <section className="bg-white border rounded-xl p-5 space-y-4">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div>
+                        <h2 className="font-semibold text-gray-900">Tab ML: Gọi tất cả endpoint</h2>
+                        <p className="text-sm text-gray-500 mt-0.5">
+                            Gọi tuần tự: <code className="font-mono text-xs bg-gray-100 px-1 rounded">/health</code>, <code className="font-mono text-xs bg-gray-100 px-1 rounded">/interactions/stats</code>, <code className="font-mono text-xs bg-gray-100 px-1 rounded">/train</code>, <code className="font-mono text-xs bg-gray-100 px-1 rounded">/evaluate</code>, <code className="font-mono text-xs bg-gray-100 px-1 rounded">/recommend</code>, <code className="font-mono text-xs bg-gray-100 px-1 rounded">/similar</code>
+                        </p>
+                    </div>
+                    <button
+                        onClick={callAllEndpoints}
+                        disabled={allLoading || !serverUp}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-black disabled:opacity-50 transition"
+                    >
+                        <RefreshCw size={14} className={allLoading ? "animate-spin" : ""} />
+                        {allLoading ? "Đang gọi..." : "Gọi tất cả endpoint"}
+                    </button>
+                </div>
+
+                {allError && (
+                    <p className="text-sm text-rose-600 flex items-center gap-1">
+                        <AlertTriangle size={13} /> {allError}
+                    </p>
+                )}
+
+                {allOutput && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {Object.entries(allOutput).map(([key, value]) => (
+                            <div key={key} className="border rounded-lg overflow-hidden">
+                                <div className="px-3 py-2 bg-gray-50 border-b text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                    {key}
+                                </div>
+                                <pre className="text-xs p-3 overflow-auto max-h-72 bg-white text-gray-800">
+                                    {JSON.stringify(value, null, 2)}
+                                </pre>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </section>
 
             {/* ── Stats ── */}
