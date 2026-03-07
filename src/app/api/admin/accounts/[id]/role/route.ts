@@ -6,10 +6,10 @@ const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
 })
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authHeader = request.headers.get('Authorization')
-    const id = params.id
+    const { id } = await params
     const body = await request.json()
 
     // Update user's role - backend endpoint: PUT /admin/accounts/:id

@@ -6,10 +6,10 @@ const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
 })
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authHeader = request.headers.get('Authorization')
-    const id = params.id
+    const { id } = await params
 
     const response = await apiClient.get(`/admin/accounts/${id}`, {
       headers: {
@@ -24,10 +24,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authHeader = request.headers.get('Authorization')
-    const id = params.id
+    const { id } = await params
     const body = await request.json()
 
     const response = await apiClient.put(`/admin/accounts/${id}`, { role: body.role }, {
@@ -46,10 +46,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authHeader = request.headers.get('Authorization')
-    const id = params.id
+    const { id } = await params
 
     const response = await apiClient.delete(`/admin/accounts/${id}`, {
       headers: {
