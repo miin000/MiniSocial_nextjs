@@ -80,6 +80,8 @@ export default function UserManagementPage() {
 
     // ✅ SỬA CHUẨN THEO BACKEND
     const onBanToggle = async (u: User) => {
+        const action = u.status === "active" ? "chặn" : "bỏ chặn"
+        if (!confirm(`Bạn có chắc muốn ${action} user ${u.username}?`)) return
         try {
             if (u.status === "active") {
                 await api.put(`/admin/users/${u.id}/block`)
@@ -87,7 +89,6 @@ export default function UserManagementPage() {
                 await api.put(`/admin/users/${u.id}/unblock`)
             }
 
-            // update UI luôn, không phụ thuộc BE
             setUsersData(prev =>
                 prev.map(user =>
                     user.id === u.id
@@ -105,9 +106,14 @@ export default function UserManagementPage() {
     }
 
     const onDelete = async (u: User) => {
-        if (!confirm(`Xoá user ${u.username}?`)) return
-        await api.delete(`/admin/users/${u.id}`)
-        fetchUsers()
+        if (!confirm(`Xoá user ${u.username}? Hành động này không thể hoàn tác.`)) return
+        try {
+            await api.delete(`/admin/users/${u.id}`)
+            setUsersData(prev => prev.filter(user => user.id !== u.id))
+        } catch (err) {
+            console.error(err)
+            alert("Không xoá được user")
+        }
     }
 
     const onView = (u: User) => {

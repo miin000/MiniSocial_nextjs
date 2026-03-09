@@ -55,18 +55,32 @@ export default function ReportsPage() {
     }, [loadReports, loadStats])
 
     const filteredReports = useMemo(() => {
-        if (!search) return reports
-        const s = search.toLowerCase()
-        return reports.filter((r: any) => {
-            return (
-                r.reporter_info?.username?.toLowerCase().includes(s) ||
-                r.reporter_info?.full_name?.toLowerCase().includes(s) ||
-                r.reason?.toLowerCase().includes(s) ||
-                r.post_info?.content?.toLowerCase().includes(s) ||
-                r.post_info?.author_username?.toLowerCase().includes(s)
-            )
-        })
+        let result = reports
+        if (search) {
+            const s = search.toLowerCase()
+            result = result.filter((r: any) => {
+                return (
+                    r.reporter_info?.username?.toLowerCase().includes(s) ||
+                    r.reporter_info?.full_name?.toLowerCase().includes(s) ||
+                    r.reason?.toLowerCase().includes(s) ||
+                    r.post_info?.content?.toLowerCase().includes(s) ||
+                    r.post_info?.author_username?.toLowerCase().includes(s)
+                )
+            })
+        }
+        return result
     }, [search, reports])
+
+    // Count duplicate reports per post
+    const reportCountByPost = useMemo(() => {
+        const counts: Record<string, number> = {}
+        for (const r of reports) {
+            if (r.reported_post_id) {
+                counts[r.reported_post_id] = (counts[r.reported_post_id] || 0) + 1
+            }
+        }
+        return counts
+    }, [reports])
 
     const totalPages = Math.ceil(total / PAGE_SIZE)
 
@@ -176,6 +190,11 @@ export default function ReportsPage() {
                                                         </p>
                                                         <p className="text-xs text-gray-500">
                                                             by {r.post_info.author_name || r.post_info.author_username}
+                                                            {r.reported_post_id && reportCountByPost[r.reported_post_id] > 1 && (
+                                                                <span className="ml-2 px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-semibold">
+                                                                    {reportCountByPost[r.reported_post_id]} reports
+                                                                </span>
+                                                            )}
                                                         </p>
                                                     </>
                                                 ) : (

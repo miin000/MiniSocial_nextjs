@@ -28,6 +28,9 @@ export default function SystemSettingsForm({ onSaved }: Props) {
 
   useEffect(() => {
     load()
+    // Auto-refresh settings every 30 seconds for real-time sync
+    const interval = setInterval(load, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const startEdit = (setting: SystemSetting) => {

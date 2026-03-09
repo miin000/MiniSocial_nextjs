@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Search, Bell, ChevronDown, User, LogOut, Settings } from 'lucide-react'
+import { Bell, ChevronDown, User, LogOut, Settings } from 'lucide-react'
 import { useAuthStore } from '@/store/auth.store'
 import { useRouter } from 'next/navigation'
 
@@ -31,18 +31,8 @@ export default function Topbar() {
     return (
         <header className="h-16 bg-white border-b flex items-center justify-between px-6">
 
-            {/* Search */}
-            <div className="relative w-[420px]">
-                <Search
-                    size={18}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-                />
-                <input
-                    type="text"
-                    placeholder="Search users, posts, ID..."
-                    className="w-full pl-10 pr-4 py-2 text-sm text-gray-800 placeholder-gray-400 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-            </div>
+            {/* Title */}
+            <div />
 
             {/* Right actions */}
             <div className="flex items-center gap-6">
