@@ -25,7 +25,7 @@ export interface User {
   username?: string;
   fullName?: string;
   full_name?: string;
-  roles_admin?: string;
+  roles_admin?: string[];
   roles_group?: string[];
   avatar?: string;
 }

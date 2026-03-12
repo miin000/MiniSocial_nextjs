@@ -36,7 +36,7 @@ export default function Sidebar() {
     const pathname = usePathname()
     const router = useRouter()
     const { logout, user } = useAuthStore()
-    const isAdmin = user?.roles_admin === 'ADMIN'
+    const isAdmin = user?.roles_admin?.includes('ADMIN') ?? false
 
     const handleLogout = () => {
         logout()
